@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KSÜ RAG Mevzuat Danışmanı</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --ksu-blue: #0088cc;
+            --bg-color: #f4f7f6;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+
+        header {
+            background-color: var(--ksu-blue);
+            color: white;
+            padding: 15px 40px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-img {
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            padding: 2px;
+        }
+
+        .university-name {
+            font-size: 1.4rem;
+            font-weight: bold;
+            line-height: 1.2;
+        }
+
+        .university-sub {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            font-weight: normal;
+        }
+
+        .chat-container {
+            flex: 1;
+            max-width: 900px;
+            width: 100%;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .messages-area {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 15px;
+            line-height: 1.5;
+            position: relative;
+            font-size: 0.95rem;
+            white-space: normal;
+        }
+
+        .message.user {
+            background-color: var(--ksu-blue);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 2px;
+        }
+
+        .message.bot {
+            background-color: #f1f1f1;
+            color: #333;
+            align-self: flex-start;
+            border-bottom-left-radius: 2px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: #fff;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 30px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--ksu-blue);
+        }
+
+        button {
+            background-color: var(--ksu-blue);
+            color: white;
+            border: none;
+            padding: 0 25px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background-color: #006699;
+        }
+
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        .sources-box {
+            margin-top: 10px;
+            font-size: 0.85rem;
+            background: #eef7fb;
+            padding: 8px;
+            border-radius: 8px;
+            color: #444;
+        }
+
+        .source-title {
+            font-weight: bold;
+            color: var(--ksu-blue);
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .source-item {
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .typing-indicator {
+            display: none;
+            color: #888;
+            font-size: 0.8rem;
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+
+        .retrieved-box {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #d7e7ef;
+        }
+
+        .retrieved-item {
+            margin-bottom: 6px;
+            font-size: 0.85rem;
+            color: #333;
+        }
+
+        .retrieved-item b {
+            display: inline-block;
+            min-width: 64px;
+        }
+
+        .clarification-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .clarification-btn {
+            background-color: var(--ksu-blue);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: background 0.3s;
+        }
+
+        .clarification-btn:hover {
+            background-color: #006699;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo-area">
+        <img src="logo_ksü.png" alt="KSÜ Logo" class="logo-img">
+        <div>
+            <div class="university-name">T.C. KAHRAMANMARAŞ<br>SÜTÇÜ İMAM ÜNİVERSİTESİ</div>
+            <div class="university-sub">Yapay Zeka Destekli Mevzuat Danışmanı</div>
+        </div>
+    </div>
+</header>
+
+<div class="chat-container">
+    <div class="messages-area" id="messagesArea">
+        <div class="message bot">
+            Merhaba! Ben RAG tabanlı KSÜ Mevzuat Asistanı. Öğrenci yönetmelikleri, yaz okulu, staj veya ders kayıtları hakkında soru sorabilirsiniz.
+        </div>
+    </div>
+
+    <div class="typing-indicator" id="typingIndicator">
+        <i class="fas fa-circle-notch fa-spin"></i> Danışman cevap hazırlıyor...
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Sorunuzu buraya yazın..." autocomplete="off">
+        <button onclick="sendMessage()" id="sendBtn"><i class="fas fa-paper-plane"></i></button>
+    </div>
+</div>
+
+<script>
+    const API_URL = "http://127.0.0.1:8000/ask";
+
+    const inputField = document.getElementById("userInput");
+    const messagesArea = document.getElementById("messagesArea");
+    const sendBtn = document.getElementById("sendBtn");
+    const typingIndicator = document.getElementById("typingIndicator");
+
+    let sessionId = null;
+    let pendingClarification = null;
+
+    inputField.addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            sendMessage();
+        }
+    });
+
+    async function sendMessage(clarificationData = null) {
+        let question = inputField.value.trim();
+        let displayText = question;
+
+        if (clarificationData) {
+            question = clarificationData.value;
+            displayText = clarificationData.label;
+        }
+
+        if (!question && !clarificationData) return;
+
+        addMessage(displayText, "user");
+
+        inputField.value = "";
+        inputField.disabled = true;
+        sendBtn.disabled = true;
+        typingIndicator.style.display = "block";
+
+        try {
+            const requestBody = { question };
+
+            if (sessionId) {
+                requestBody.session_id = sessionId;
+            }
+
+            if (pendingClarification && clarificationData) {
+                requestBody.clarification = {};
+                requestBody.clarification[pendingClarification.type] = clarificationData.value;
+            }
+
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(requestBody)
+            });
+
+            if (!response.ok) {
+                throw new Error("API Hatası");
+            }
+
+            const data = await response.json();
+
+            if (data.session_id) {
+                sessionId = data.session_id;
+            }
+
+            if (data.needs_clarification && data.clarification_options) {
+                pendingClarification = data.clarification_options;
+                addMessageWithButtons(data.answer, data.clarification_options.options);
+            } else {
+                pendingClarification = null;
+
+                addMessage(
+                    data.answer,
+                    "bot",
+                    data.sources,
+                    data.duration,
+                    data.retrieved,
+                    data.source_links
+                );
+            }
+
+        } catch (error) {
+            addMessage("Üzgünüm, bağlantı hatası oluştu. Lütfen API'nin çalıştığını kontrol edin.", "bot");
+            console.error(error);
+        } finally {
+            inputField.disabled = false;
+            sendBtn.disabled = false;
+            inputField.focus();
+            typingIndicator.style.display = "none";
+        }
+    }
+
+    function escapeHtml(str) {
+        return String(str ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function escapeAttribute(str) {
+        return String(str ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/"/g, "&quot;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
+    function escapeJs(str) {
+        return String(str ?? "")
+            .replace(/\\/g, "\\\\")
+            .replace(/'/g, "\\'");
+    }
+
+    function cleanAnswer(text) {
+        let t = String(text ?? "").trim();
+        t = t.replace(/^\s*(cevap|yanıt)\s*:\s*/i, "");
+        t = t.replace(/^\s*soru\s*:\s*.*(\r?\n)+/i, "");
+        return t.trim();
+    }
+
+    function addMessageWithButtons(text, options) {
+        const div = document.createElement("div");
+        div.className = "message bot";
+
+        let contentHtml = escapeHtml(text).replace(/\n/g, "<br>");
+        contentHtml += `<div class="clarification-buttons">`;
+
+        options.forEach(opt => {
+            contentHtml += `
+                <button
+                    class="clarification-btn"
+                    onclick="handleClarification('${escapeJs(opt.value)}', '${escapeJs(opt.label)}')">
+                    ${escapeHtml(opt.label)}
+                </button>
+            `;
+        });
+
+        contentHtml += `</div>`;
+
+        div.innerHTML = contentHtml;
+        messagesArea.appendChild(div);
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+
+    function handleClarification(value, label) {
+        document.querySelectorAll(".clarification-btn").forEach(btn => {
+            btn.disabled = true;
+            btn.style.opacity = "0.5";
+        });
+
+        sendMessage({ value, label });
+    }
+
+    function findSourceUrl(sourceName, sourceLinks = []) {
+        if (!sourceName || !Array.isArray(sourceLinks)) return null;
+
+        const exact = sourceLinks.find(x => x.source === sourceName && x.url);
+        if (exact) return exact.url;
+
+        const normalizedSource = String(sourceName).trim().toLowerCase();
+
+        const loose = sourceLinks.find(x => {
+            if (!x.source || !x.url) return false;
+            return String(x.source).trim().toLowerCase() === normalizedSource;
+        });
+
+        return loose ? loose.url : null;
+    }
+
+    function addMessage(text, sender, sources = [], duration = null, retrieved = [], sourceLinks = []) {
+        const div = document.createElement("div");
+        div.className = `message ${sender}`;
+
+        let shownText = sender === "bot" ? cleanAnswer(text) : String(text ?? "");
+        let contentHtml = escapeHtml(shownText).replace(/\n/g, "<br>");
+
+        if (sender === "bot" && sources && sources.length > 0) {
+            let sourcesHtml = `<div class="sources-box"><span class="source-title">Kaynaklar:</span>`;
+
+            sources.forEach(src => {
+                const url = findSourceUrl(src, sourceLinks);
+
+                if (url) {
+                    sourcesHtml += `
+                        <a class="source-item"
+                           href="${escapeAttribute(url)}"
+                           target="_blank"
+                           rel="noopener noreferrer">
+                           • ${escapeHtml(src)}
+                        </a>
+                    `;
+                } else {
+                    sourcesHtml += `<span class="source-item">• ${escapeHtml(src)}</span>`;
+                }
+            });
+
+            if (duration !== null && duration !== undefined) {
+                sourcesHtml += `<br><small style="color:#888; font-size:0.7em">Süre: ${escapeHtml(duration)} sn</small>`;
+            }
+
+            if (retrieved && retrieved.length > 0) {
+                sourcesHtml += `<div class="retrieved-box">`;
+                sourcesHtml += `<span class="source-title">Top Eşleşmeler:</span>`;
+
+                retrieved.slice(0, 5).forEach(r => {
+                    const score = r && r.score !== undefined && r.score !== null ? r.score : "-";
+                    const src = r && r.source ? r.source : "Bilinmeyen";
+                    const madde = r && r.madde ? r.madde : "";
+                    const url = r && r.source_url ? r.source_url : null;
+
+                    if (url) {
+                        sourcesHtml += `
+                            <div class="retrieved-item">
+                                <b>${escapeHtml(score)}</b> —
+                                <a href="${escapeAttribute(url)}"
+                                   target="_blank"
+                                   rel="noopener noreferrer">
+                                   ${escapeHtml(src)}
+                                </a>
+                                ${madde ? "(" + escapeHtml(madde) + ")" : ""}
+                            </div>
+                        `;
+                    } else {
+                        sourcesHtml += `
+                            <div class="retrieved-item">
+                                <b>${escapeHtml(score)}</b> —
+                                ${escapeHtml(src)}
+                                ${madde ? "(" + escapeHtml(madde) + ")" : ""}
+                            </div>
+                        `;
+                    }
+                });
+
+                sourcesHtml += `</div>`;
+            }
+
+            sourcesHtml += `</div>`;
+            contentHtml += sourcesHtml;
+        }
+
+        div.innerHTML = contentHtml;
+        messagesArea.appendChild(div);
+        messagesArea.scrollTop = messagesArea.scrollHeight;
+    }
+</script>
+</body>
+</html>
