@@ -1,0 +1,59 @@
+{
+  "dataset_version": "1.0",
+  "description": "Aşama 0 sırasında gözlenen clarification, no-answer ve doğrudan cevap davranışlarının regression kayıtları.",
+  "cases": [
+    {
+      "issue_id": "REG-CLAR-001",
+      "question": "Bir dönemde kaç AKTS alabilirim?",
+      "expected_behavior": "clarification",
+      "expected_clarification_type": "term_scope",
+      "observed_behavior": "answer",
+      "severity": "high",
+      "note": "Normal dönem ile yaz öğretimi bağlamı ayrıştırılmadan 40/46 AKTS cevabı verilmişti."
+    },
+    {
+      "issue_id": "REG-CLAR-002",
+      "question": "Devamsızlık sınırı nedir?",
+      "expected_behavior": "clarification",
+      "observed_behavior": "answer",
+      "severity": "high",
+      "note": "Program/ders türü sorulmadan yabancı dil hazırlığa özgü %15 cevabı verilmişti."
+    },
+    {
+      "issue_id": "REG-CLAR-003",
+      "question": "Sınav hakkı kaç tane?",
+      "expected_behavior": "clarification",
+      "observed_behavior": "answer",
+      "severity": "high",
+      "note": "Sınav türü belirlenmeden farklı sınav haklarını karıştıran uzun bir cevap verilmişti."
+    },
+    {
+      "issue_id": "REG-CLAR-004",
+      "question": "Özel öğrenci kredi toplamı nasıl değerlendirilir?",
+      "expected_behavior": "answer",
+      "observed_behavior": "clarification",
+      "severity": "medium",
+      "note": "Soru özel öğrenci bağlamını açıkça içerdiği hâlde gereksiz term_scope clarification oluşmuştu."
+    },
+    {
+      "issue_id": "REG-NOANSWER-001",
+      "question": "Üniversitenin otopark abonelik ücreti ne kadar?",
+      "expected_behavior": "no_answer",
+      "observed_behavior": "no_answer",
+      "severity": "regression_guard",
+      "note": "Sistem bilgi uydurmadan güvenli no-answer vermişti."
+    },
+    {
+      "issue_id": "REG-ANSWER-001",
+      "question": "Yaz öğretiminde kaç ders saati alınabilir?",
+      "expected_behavior": "answer",
+      "expected_key_facts": [
+        "16 ders saati",
+        "tek ders"
+      ],
+      "observed_behavior": "answer",
+      "severity": "regression_guard",
+      "note": "Doğru yaz öğretimi belgesine dayanarak 16 saat ve tek ders istisnası verilmişti."
+    }
+  ]
+}

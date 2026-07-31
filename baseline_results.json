@@ -1,0 +1,239 @@
+{
+  "total": 5,
+  "passed": 2,
+  "failed": 3,
+  "results": [
+    {
+      "question": "Özel öğrenci kredi toplamı nasıl değerlendirilir?",
+      "expected_behavior": "direct",
+      "actual_behavior": "clarification",
+      "passed": false,
+      "http_status": 200,
+      "answer": "Bunu normal dönem için mi yoksa yaz öğretimi için mi soruyorsunuz?",
+      "needs_clarification": true,
+      "clarification_options": {
+        "type": "term_scope",
+        "message": "Bunu normal dönem için mi yoksa yaz öğretimi için mi soruyorsunuz?",
+        "options": [
+          {
+            "value": "normal_donem",
+            "label": "Normal dönem"
+          },
+          {
+            "value": "yaz_okulu",
+            "label": "Yaz öğretimi"
+          }
+        ]
+      },
+      "sources": [
+        "KSÜ Özel öğrenci yönergesi_2309211343292066.pdf",
+        "KSÜ-ÖNLİSANS-LİSANS YÖNETMELİĞİ_1507131506129631.docx",
+        "Yönerge_son_hali_2412261417017378.docx"
+      ],
+      "duration": 0.36,
+      "session_id": "bb2c0d77-9429-4bd2-8c58-9f413cfb3458",
+      "top_retrieved": [
+        {
+          "source": "KSÜ-ÖNLİSANS-LİSANS YÖNETMELİĞİ_1507131506129631.docx",
+          "madde_no": null,
+          "score": 0.5734,
+          "dense_score": 0.5708,
+          "lexical_score": 0.58
+        },
+        {
+          "source": "Yönerge_son_hali_2412261417017378.docx",
+          "madde_no": null,
+          "score": 0.5389,
+          "dense_score": 0.6241,
+          "lexical_score": 0.32
+        },
+        {
+          "source": "Yönerge_son_hali_2412261417017378.docx",
+          "madde_no": null,
+          "score": 0.5308,
+          "dense_score": 0.6127,
+          "lexical_score": 0.32
+        }
+      ],
+      "clarification_followup": {
+        "selected_type": "term_scope",
+        "selected_value": "normal_donem",
+        "selected_label": "Normal dönem",
+        "answer": "Senato tarafından belirlenen özel öğrencilik esaslarına göre, seçilen derslerin toplam AKTS kredisinin bir yarıyılda 30 AKTS olması hedeflenmektedir (KSÜ LİSANS EĞİTİM ÖĞRETİM YÖNETMELİK SON - 21101810). Bu hedef doğrultusunda, özel öğrenciler aldıkları derslerin kredi değerini genel not ortalamalarına dahil edebilirler.",
+        "needs_clarification": false,
+        "sources": [
+          "KSÜ LİSANS EĞİTİM ÖĞRETİM YÖNETMELİK SON (23 Haziran 2019)_1906271417371007_2110130857557610_21101810.docx",
+          "Yönerge_son_hali_2412261417017378.docx"
+        ],
+        "duration": 17.0,
+        "top_retrieved": [
+          {
+            "source": "Yönerge_son_hali_2412261417017378.docx",
+            "madde_no": null,
+            "score": 0.5389,
+            "dense_score": 0.6241,
+            "lexical_score": 0.32
+          },
+          {
+            "source": "KSÜ LİSANS EĞİTİM ÖĞRETİM YÖNETMELİK SON (23 Haziran 2019)_1906271417371007_2110130857557610_21101810.docx",
+            "madde_no": null,
+            "score": 0.5382,
+            "dense_score": 0.5647,
+            "lexical_score": 0.47
+          },
+          {
+            "source": "KSÜ LİSANS EĞİTİM ÖĞRETİM YÖNETMELİK SON (23 Haziran 2019)_1906271417371007_2110130857557610_21101810.docx",
+            "madde_no": null,
+            "score": 0.5382,
+            "dense_score": 0.5647,
+            "lexical_score": 0.47
+          }
+        ]
+      }
+    },
+    {
+      "question": "Uzaktan öğretimde toplam AKTS'nin en fazla yüzde kaçı uzaktan olabilir?",
+      "expected_behavior": "direct",
+      "actual_behavior": "direct",
+      "passed": true,
+      "http_status": 200,
+      "answer": "KSÜ UZAKTAN ÖĞRETİM YÖNERGESİ’nin 6. Maddesi (1) ve (2) bentlerinde belirtildiği üzere, ilgili programın müfredatında yer alan toplam AKTS kredisinin en fazla %30’una kadar dersler uzaktan öğretim yöntemiyle verilebilir.",
+      "needs_clarification": false,
+      "clarification_options": null,
+      "sources": [
+        "KSÜ UZAKTAN ÖĞRETİM YÖNERGESİ_2212071543444445.pdf",
+        "KSÜ-ÖNLİSANS-LİSANS YÖNETMELİĞİ_1507131506129631.docx"
+      ],
+      "duration": 6.52,
+      "session_id": "fcef3d54-342c-4e8d-bc1e-87c0196401f3",
+      "top_retrieved": [
+        {
+          "source": "KSÜ UZAKTAN ÖĞRETİM YÖNERGESİ_2212071543444445.pdf",
+          "madde_no": null,
+          "score": 0.6012,
+          "dense_score": 0.6484,
+          "lexical_score": 0.48
+        },
+        {
+          "source": "KSÜ UZAKTAN ÖĞRETİM YÖNERGESİ_2212071543444445.pdf",
+          "madde_no": null,
+          "score": 0.5696,
+          "dense_score": 0.6434,
+          "lexical_score": 0.38
+        },
+        {
+          "source": "KSÜ-ÖNLİSANS-LİSANS YÖNETMELİĞİ_1507131506129631.docx",
+          "madde_no": null,
+          "score": 0.497,
+          "dense_score": 0.562,
+          "lexical_score": 0.33
+        }
+      ],
+      "clarification_followup": null
+    },
+    {
+      "question": "Ek sınav hangi durumda açılır?",
+      "expected_behavior": "direct",
+      "actual_behavior": "direct",
+      "passed": true,
+      "http_status": 200,
+      "answer": "Ek sınavlar, aşağıdaki durumlarda açılır:\n\n*   Tıp fakültesi ve diş hekimliği fakültesinde intörn olan öğrenciler için (son sınıf uygulaması değerlendirilirken azami süre sonunda başarısızlık durumunda 1 yıl ek süre verilir).\n*   Ara sınıfta olup başarısız olan ve tekrar eden öğrencilere ek sınav hakkı verilmez.\n*   Öğrencilerin azami öğrenim sürelerini doldurması halinde (online başvuru ile) başvurabilirler.",
+      "needs_clarification": false,
+      "clarification_options": null,
+      "sources": [
+        "Ek Sınav Uygulama Esasları_2508121355179287.pdf"
+      ],
+      "duration": 13.37,
+      "session_id": "272cd525-13c9-4cad-8a5c-455531259987",
+      "top_retrieved": [
+        {
+          "source": "Ek Sınav Uygulama Esasları_2508121355179287.pdf",
+          "madde_no": null,
+          "score": 0.6856,
+          "dense_score": 0.5906,
+          "lexical_score": 0.93
+        },
+        {
+          "source": "Ek Sınav Uygulama Esasları_2508121355179287.pdf",
+          "madde_no": null,
+          "score": 0.6272,
+          "dense_score": 0.6067,
+          "lexical_score": 0.68
+        },
+        {
+          "source": "Ek Sınav Uygulama Esasları_2508121355179287.pdf",
+          "madde_no": null,
+          "score": 0.6139,
+          "dense_score": 0.5882,
+          "lexical_score": 0.68
+        }
+      ],
+      "clarification_followup": null
+    },
+    {
+      "question": "Devamsızlık sınırı nedir?",
+      "expected_behavior": "clarification",
+      "actual_behavior": "direct",
+      "passed": false,
+      "http_status": 200,
+      "answer": "MADDE 10’a göre, Zorunlu Yabancı Dil Hazırlık Programında devamsızlık üst sınırı toplam ders saatinin %15’idir.",
+      "needs_clarification": false,
+      "clarification_options": null,
+      "sources": [
+        "ksu_yabancı_dil.docx"
+      ],
+      "duration": 3.67,
+      "session_id": "eb64ab73-6fbb-445b-8d15-1dc0e08f78d9",
+      "top_retrieved": [
+        {
+          "source": "ksu_yabancı_dil.docx",
+          "madde_no": null,
+          "score": 0.7275,
+          "dense_score": 0.6216,
+          "lexical_score": 1.0
+        }
+      ],
+      "clarification_followup": null
+    },
+    {
+      "question": "Sınav hakkı kaç tane?",
+      "expected_behavior": "clarification",
+      "actual_behavior": "direct",
+      "passed": false,
+      "http_status": 200,
+      "answer": "Ek Sınav Uygulama Esasları mevzuatına göre sınav haklarınız şunlardır:\n\n1.  **Standart Sınav Hakkı:** Başarısız olduğunuz bir ders için sınırsız sınav hakkı tanınır. Bu durumda başarılı olup AKTS şartını sağlamış olmanız ve 2,00 ortalamayı sağlayamamış olmanız durumunda dilediğiniz derslerin sınavlarına girebilirsiniz.\n2.  **Azami Süre Sonrası Sınav Hakkı:** Azami öğrenim sürenizi tamamlamamış veya 2,00 ortalama eşiklerini kaçırmışsanız, her yarıyıl sonunda (Tek Ders Sınavı) sınırsız sınav hakkı tanınır.\n3.  **Ek Süre Sonrası Sınav Hakkı:** 3 veya 4 yarıyıl ek süre almışsanız ve bu süre içinde bütün derslerinizi tamamlayamamışsanız, verilen süre bitimini beklemeden dilediğiniz derslerin sınavlarına girebilirsiniz.\n4.  **Hafilli Notu FF/FD Olan Dersler İçin Mezuniyet Sınavı:** (Bu hak KSÜ-ÖNLİSANS-LİSANS YÖNETMELİĞİ'nde yer almaktadır) Not ortalamanız FF veya FD ise ve genel not ortalamanız 2.00’ın altında ise, en fazla 3 derfken mezuniyet sınavına girebilirsiniz.",
+      "needs_clarification": false,
+      "clarification_options": null,
+      "sources": [
+        "Ek Sınav Uygulama Esasları_2508121355179287.pdf",
+        "KSÜ-ÖNLİSANS-LİSANS YÖNETMELİĞİ_1507131506129631.docx"
+      ],
+      "duration": 21.27,
+      "session_id": "af7c02a7-ed7d-4766-876c-febbac4a7969",
+      "top_retrieved": [
+        {
+          "source": "Ek Sınav Uygulama Esasları_2508121355179287.pdf",
+          "madde_no": null,
+          "score": 0.67,
+          "dense_score": 0.648,
+          "lexical_score": 0.7267
+        },
+        {
+          "source": "Ek Sınav Uygulama Esasları_2508121355179287.pdf",
+          "madde_no": null,
+          "score": 0.6596,
+          "dense_score": 0.6336,
+          "lexical_score": 0.7267
+        },
+        {
+          "source": "Ek Sınav Uygulama Esasları_2508121355179287.pdf",
+          "madde_no": null,
+          "score": 0.6493,
+          "dense_score": 0.6192,
+          "lexical_score": 0.7267
+        }
+      ],
+      "clarification_followup": null
+    }
+  ]
+}

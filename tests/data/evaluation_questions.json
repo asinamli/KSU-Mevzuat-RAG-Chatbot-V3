@@ -1,0 +1,315 @@
+{
+  "dataset_version": "1.0",
+  "description": "KSÜ Mevzuat RAG için cevaplanabilir ve mevzuatta hükmü bulunmayan sorulardan oluşan değerlendirme veri seti.",
+  "counts": {
+    "answer": 20,
+    "no_answer": 18,
+    "total": 38
+  },
+  "cases": [
+    {
+      "case_id": "answer_001",
+      "question": "Çift anadal programı nasıl açılır?",
+      "expected_behavior": "answer",
+      "expected_answer": "Aynı yükseköğretim kurumunda yürütülen önlisans ve lisans diploma programları arasında ilgili bölümlerin ve fakülte kurullarının önerisi üzerine senatonun onayı ile çift anadal programı açılabilir.",
+      "category": "Çift Anadal",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_002",
+      "question": "Yandal programına hangi yarıyıllarda başvurulabilir?",
+      "expected_behavior": "answer",
+      "expected_answer": "Öğrenci, yandal programına, anadal lisans programının en erken üçüncü, en geç altıncı yarıyılın başında başvurabilir.",
+      "category": "Yandal Programı",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_003",
+      "question": "Pedagojik formasyon programına başvuru için minimum not ortalaması nedir?",
+      "expected_behavior": "answer",
+      "expected_answer": "Öğrencilerin programa kayıt hakkı kazanabilmeleri için not ortalamalarının 4'lük not sistemine göre en az 2.00, 100'lük sisteme göre ise en az 53,33 olması gerekir.",
+      "category": "Pedagojik Formasyon",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_004",
+      "question": "Pedagojik formasyon programı öğrenim ücreti nasıl belirlenir?",
+      "expected_behavior": "answer",
+      "expected_answer": "İkinci Öğretim Öğrenim Ücretlerinin en fazla iki katına kadar olabilir ve kurumca belirlenecek taksitler halinde ödenir.",
+      "category": "Pedagojik Formasyon",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_005",
+      "question": "Kurumlar arası yatay geçiş için genel not ortalaması şartı nedir?",
+      "expected_behavior": "answer",
+      "expected_answer": "Öğrencinin genel not ortalamasının 4'lük sistemde en az 2.30, 100'lük sistemde en az 60 olması gerekir.",
+      "category": "Yatay Geçiş",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_006",
+      "question": "Bitirme tezi ve seminer hangi yarıyıllarda yürütülür?",
+      "expected_behavior": "answer",
+      "expected_answer": "Bitirme Tezi ve Seminer 7. ve 8. yarıyılda haftada 4 saat olarak yürütülür.",
+      "category": "Bitirme Tezi",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_007",
+      "question": "Lisans programlarını tamamlamak için azami süre nedir?",
+      "expected_behavior": "answer",
+      "expected_answer": "4 yıllık lisans programları azami 7 yıl, 5 yıllık lisans programları azami 8 yıl, 6 yıllık lisans programları azami 9 yıl içinde tamamlanmalıdır.",
+      "category": "Azami Süre",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_008",
+      "question": "Bir eğitim-öğretim yılı kaç haftadan oluşur?",
+      "expected_behavior": "answer",
+      "expected_answer": "Bir örgün eğitim-öğretim yılı, her biri ara sınav süresi dâhil on beş haftadan oluşan güz ve bahar yarıyıllarından oluşur.",
+      "category": "Eğitim Dönemi",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_009",
+      "question": "Çift anadal ve yandal programları nasıl açılır?",
+      "expected_behavior": "answer",
+      "expected_answer": "İlgili bölümün isteği, ilgili birim kurulunun önerisi ve Senatonun kararı ile açılır.",
+      "category": "Program Açma",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_010",
+      "question": "4 yıllık lisans programı için toplam AKTS kaçtır?",
+      "expected_behavior": "answer",
+      "expected_answer": "4 yıl olan programlarda 240 AKTS'dir.",
+      "category": "AKTS",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_011",
+      "question": "Teorik derslere devam mecburiyeti yüzde kaçtır?",
+      "expected_behavior": "answer",
+      "expected_answer": "Öğrencilerin teorik derslere en az %70, uygulamalara en az %80 oranında devamları zorunludur.",
+      "category": "Devam",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_012",
+      "question": "Başarılı sayılmak için genel not ortalaması kaç olmalıdır?",
+      "expected_behavior": "answer",
+      "expected_answer": "Yarıyıl sonu veya yıl sonu itibariyle genel not ortalaması en az 2,00 olan öğrenci başarılı sayılır.",
+      "category": "Başarı",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_013",
+      "question": "Yabancı dilde öğretim için TOEFL IBT'den minimum kaç puan gerekir?",
+      "expected_behavior": "answer",
+      "expected_answer": "TOEFL IBT sınavından 72 puan almış olmak gerekir.",
+      "category": "Yabancı Dil",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_014",
+      "question": "Yabancı uyruklu öğrenci başvurusunda hangi belgeler istenir?",
+      "expected_behavior": "answer",
+      "expected_answer": "Başvuru Formu, lisans diplomasının onaylı örneği, not durum belgesinin onaylı örneği, Türkçe dil yeterliliği belgesi, yabancı dil belgesi, ALES sonuç belgesi ve pasaport fotokopisi istenir.",
+      "category": "Yabancı Öğrenci",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_015",
+      "question": "UME dersi hangi bölümler için zorunludur?",
+      "expected_behavior": "answer",
+      "expected_answer": "Tekstil Mühendisliği Bölümü öğrencileri için UME dersini almak zorunludur. Diğer mühendislik bölümleri için isteğe bağlıdır.",
+      "category": "UME",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_016",
+      "question": "Kınama cezası hangi durumlarda verilir?",
+      "expected_behavior": "answer",
+      "expected_answer": "Yanlış bilgi vermek, ders düzenini bozmak, izinsiz bildiri dağıtmak, duyuruları bozmak, sınavda kopya teşebbüsü ve kampüste sigara içmek kınama cezası gerektirir.",
+      "category": "Disiplin",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_017",
+      "question": "Öğrenci temsilci adayında aranan minimum not ortalaması nedir?",
+      "expected_behavior": "answer",
+      "expected_answer": "Genel not ortalamasının 4.00 üzerinden 2.75 ve üstü olması gerekir.",
+      "category": "Öğrenci Temsilci",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_018",
+      "question": "Bölüm öğrenci temsilcisinin görevleri nelerdir?",
+      "expected_behavior": "answer",
+      "expected_answer": "Öğrenci konseyi çalışmalarını yürütmek, kararları duyurmak, öğrenci sorunlarını iletmek, etkinlikleri koordine etmek ve raporlar hazırlamak.",
+      "category": "Temsilci Görevleri",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_019",
+      "question": "Yabancı uyruklu öğrenci başvurusunda TR-YÖS puanının geçerlilik süresi nedir?",
+      "expected_behavior": "answer",
+      "expected_answer": "TR-YÖS sınavından alınan puanın geçerlilik süresi 2 yıldır.",
+      "category": "TR-YÖS",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "answer_020",
+      "question": "Staj ne zaman yapılabilir?",
+      "expected_behavior": "answer",
+      "expected_answer": "Öğrenimleri devam eden öğrencilerin stajlarını yarıyıl ve yaz tatiline rastlayan aylarda yapması esastır.",
+      "category": "Staj",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "no_answer_001",
+      "question": "Final sınavından 30 alan öğrencilerin otomatik olarak bütünleme hakkı kazanması zorunlu mudur",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "no_answer_002",
+      "question": "Derslere %50 devam eden öğrencilerin devamsızlıkları sistem tarafından silinir mi",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "no_answer_003",
+      "question": "Üniversite öğrencileri aynı anda iki farklı fakültede lisans programına kayıt yaptırabilir mi",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "no_answer_004",
+      "question": "Akademik danışmanlar öğrencinin notlarını tek taraflı olarak yükseltebilir mi",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "no_answer_005",
+      "question": "Üniversite, öğrencilerin sosyal medya paylaşımlarına göre disiplin cezası verebilir mi",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "no_answer_006",
+      "question": "Bir dersten üç kez kalan öğrenciler üniversiteden otomatik olarak ilişik kesilir mi",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "no_answer_007",
+      "question": "Öğrenciler yaz okulunda başarısız oldukları dersleri güz döneminde ücretsiz tekrar alabilir mi",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "no_answer_008",
+      "question": "Üniversite yönetimi, öğrencilerin ders programını haber vermeden iptal edebilir mi",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "no_answer_009",
+      "question": "Yandal yapan öğrencilerin ana dal not ortalaması otomatik olarak düşürülür mü",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "no_answer_010",
+      "question": "Öğrenciler, ders seçimi sırasında istedikleri öğretim üyesini talep edebilir mi",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "TestSoruları.txt"
+    },
+    {
+      "case_id": "no_answer_011",
+      "question": "Üniversite öğrencisiyken aynı anda aktif olarak şirket kurup vergi mükellefi olabilir miyim?",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "Halusinasyon_yazdirma.xlsx"
+    },
+    {
+      "case_id": "no_answer_012",
+      "question": "Ankaraya nasıl giderim",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "Halusinasyon_yazdirma.xlsx"
+    },
+    {
+      "case_id": "no_answer_013",
+      "question": "Bir dersten 3 kere kalınca okul direkt atıyor mu",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "Halusinasyon_yazdirma.xlsx"
+    },
+    {
+      "case_id": "no_answer_014",
+      "question": "Transkriptte yer alan başarısız dersler sistem tarafından otomatik silinir mi",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "Halusinasyon_yazdirma.xlsx"
+    },
+    {
+      "case_id": "no_answer_015",
+      "question": "Seçmeli dersler devamsızlık oranına göre zorunlu statüye geçirilir mi",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "Halusinasyon_yazdirma.xlsx"
+    },
+    {
+      "case_id": "no_answer_016",
+      "question": "Pi sayısının karekökü kaçtır",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "Halusinasyon_yazdirma.xlsx"
+    },
+    {
+      "case_id": "no_answer_017",
+      "question": "Başarısız dersler AKTS dengesine göre otomatik olarak silinir mi",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "Halusinasyon_yazdirma.xlsx"
+    },
+    {
+      "case_id": "no_answer_018",
+      "question": "Öğrencinin kampüse her gün gelmesi burs kazanmasını sağlar mı?",
+      "expected_behavior": "no_answer",
+      "expected_answer": null,
+      "category": "Mevzuatta Hüküm Yok / Mevzuat Dışı",
+      "source_set": "Halusinasyon_yazdirma.xlsx"
+    }
+  ]
+}
