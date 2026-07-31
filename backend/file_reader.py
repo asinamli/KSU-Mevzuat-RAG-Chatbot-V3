@@ -189,9 +189,21 @@ def _list_input_files(files_dir: Path, cfg: ReadConfig) -> List[Path]:
     exts = {".pdf", ".docx"}
 
     if cfg.recursive:
-        paths = [p for p in files_dir.rglob("*") if p.is_file() and p.suffix.lower() in exts]
+        paths = [
+            p
+            for p in files_dir.rglob("*")
+            if p.is_file()
+            and p.suffix.lower() in exts
+            and not p.name.startswith("~$")
+        ]
     else:
-        paths = [p for p in files_dir.iterdir() if p.is_file() and p.suffix.lower() in exts]
+        paths = [
+            p
+            for p in files_dir.iterdir()
+            if p.is_file()
+            and p.suffix.lower() in exts
+            and not p.name.startswith("~$")
+        ]
 
     return sorted(paths, key=lambda p: str(p).lower())
 
