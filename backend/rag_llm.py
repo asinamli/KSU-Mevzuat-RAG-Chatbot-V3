@@ -735,6 +735,29 @@ def _detect_conflict(question: str, hits: List[RankedHit], filter_params: Option
 
     explicit = _extract_explicit_facets(question)
     explicit_domain = _infer_question_domain(question)
+
+    normalized_question = _normalize_text(question)
+
+    generic_term_reference = bool(
+        re.search(
+            r"\bd[öo]nem(?:de)?\b",
+            normalized_question,
+            re.IGNORECASE,
+        )
+    )
+
+
+    if (
+        explicit_domain == "ders_yuku"
+        and _is_quantity_question(question)
+        and "term_scope" not in explicit
+        and generic_term_reference
+):
+        return _build_clarification_message(
+            "term_scope",
+            ["normal_donem", "yaz_okulu"],
+    )
+
     candidates = _facet_candidates_for_clarification(question, hits)
 
     if len(candidates) < 2:

@@ -17,10 +17,25 @@ ARTICLE_HEADER_RE = re.compile(
 )
 
 TERM_SCOPE_RULES: List[Tuple[str, re.Pattern]] = [
-    ("yaz_okulu", re.compile(r"\byaz\s*(okulu|öğretimi|ogretimi)\b", re.IGNORECASE)),
+    (
+        "yaz_okulu",
+        re.compile(
+            r"\byaz\s*(okulu|öğretimi(?:nde)?|ogretimi(?:nde)?)\b",
+            re.IGNORECASE,
+        ),
+    ),
     (
         "normal_donem",
-        re.compile(r"\b(normal\s*d[öo]nem|g[üu]z\s*d[öo]nemi|bahar\s*d[öo]nemi|yar[ıi]y[ıi]l)\b", re.IGNORECASE),
+        re.compile(
+            r"\b("
+            r"normal\s*d[öo]nem|"
+            r"g[üu]z\s*d[öo]nemi|"
+            r"bahar\s*d[öo]nemi|"
+            r"yar[ıi]y[ıi]l|"
+            r"bir\s+yar[ıi]y[ıi]lda"
+            r")\b",
+            re.IGNORECASE,
+        ),
     ),
 ]
 
@@ -76,11 +91,11 @@ TEACHING_MODE_RULES: List[Tuple[str, re.Pattern]] = [
     (
         "uzaktan",
         re.compile(
-            r"\b(uzaktan\s*öğretim|uzaktan\s*ogretim|çevrimiçi|cevrimici|eş\s*zamanlı|es\s*zamanli|eş\s*zamansız|es\s*zamansiz|harmanlanmış|harmanlanmis|karma)\b",
+            r"\b(uzaktan\s*öğretim(?:de)?|uzaktan\s*ogretim(?:de)?|çevrimiçi|cevrimici|eş\s*zamanlı|es\s*zamanli|eş\s*zamansız|es\s*zamansiz|harmanlanmış|harmanlanmis|karma)\b",
             re.IGNORECASE,
         ),
     ),
-    ("orgun", re.compile(r"\b(örgün\s*öğretim|orgun\s*ogretim|yüz\s*yüze|yuz\s*yuze)\b", re.IGNORECASE)),
+    ("orgun", re.compile(r"\b(örgün\s*öğretim(?:de)?|orgun\s*ogretim(?:de)?|yüz\s*yüze|yuz\s*yuze)\b", re.IGNORECASE)),
 ]
 
 # Burada artık bazı aşırı geniş domain'ler parçalandı.

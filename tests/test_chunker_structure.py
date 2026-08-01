@@ -1,6 +1,6 @@
 ﻿from __future__ import annotations
 
-from chunker import ChunkConfig, chunk_mevzuat
+from chunker import ChunkConfig, chunk_mevzuat, extract_facets
 
 
 TEST_CONFIG = ChunkConfig(
@@ -119,3 +119,43 @@ def test_pdf_page_markers_create_page_metadata() -> None:
     assert chunk["ext"] == ".pdf"
     assert chunk["pdf_pages"] == 3
     assert chunk["pdf_low_text"] is False
+
+
+def test_bir_yariyilda_expression_maps_to_normal_term_scope() -> None:
+    facets = extract_facets(
+        "Bir yarıyılda en fazla 46 AKTS kredisi ders alınabilir."
+    )
+
+    assert facets["term_scope"] == "normal_donem"
+
+
+def test_yaz_ogretiminde_with_normal_term_signal_is_mixed() -> None:
+    facets = extract_facets(
+        "Yaz öğretiminde bir yarıyılda ders alınabilir."
+    )
+
+    assert facets["term_scope"] == "mixed"
+
+
+def test_orgun_ogretimde_maps_to_orgun_teaching_mode() -> None:
+    facets = extract_facets(
+        "Örgün öğretimde bir dersin başarı hesabı yapılır."
+    )
+
+    assert facets["teaching_mode"] == "orgun"
+
+
+def test_uzaktan_ogretimde_maps_to_uzaktan_teaching_mode() -> None:
+    facets = extract_facets(
+        "Uzaktan öğretimde dersler yürütülür."
+    )
+
+    assert facets["teaching_mode"] == "uzaktan"
+
+
+def test_same_text_with_orgun_and_uzaktan_is_mixed() -> None:
+    facets = extract_facets(
+        "Uzaktan öğretim yoluyla örgün öğretimde ders verilebilir."
+    )
+
+    assert facets["teaching_mode"] == "mixed"
