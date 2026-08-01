@@ -534,8 +534,27 @@ def _select_candidate_hits(hits: List[RankedHit]) -> List[RankedHit]:
 
     top_score = float(hits[0].score or 0.0)
     min_score = max(SCORE_THRESHOLD - 0.05, top_score - 0.12)
-    candidates = [h for h in hits if float(h.score or 0.0) >= min_score]
-    return candidates[:4]
+
+    candidates = [
+        h for h in hits
+        if float(h.score or 0.0) >= min_score
+    ]
+
+    unique_candidates: List[RankedHit] = []
+    seen_texts = set()
+
+    for hit in candidates:
+        text = _normalize_text(
+            str((hit.payload or {}).get("text", ""))
+        )
+
+        if text in seen_texts:
+            continue
+
+        seen_texts.add(text)
+        unique_candidates.append(hit)
+
+    return unique_candidates[:4]
 
 
 def _collect_facet_values(hits: List[RankedHit], facet: str) -> List[str]:
@@ -1016,9 +1035,19 @@ def ask(
 
     start_time = time.time()
 
+    effective_filter_params = dict(filter_params or {})
+
+    explicit_facets = _extract_explicit_facets(question)
+
+    if (
+    "student_status" not in effective_filter_params
+    and explicit_facets.get("student_status") == "ozel_ogrenci"
+):
+        effective_filter_params["student_status"] = "ozel_ogrenci"
+
     try:
-        hits = _retrieve(question, history, top_k=top_k, filter_params=filter_params, use_history=True)
-        hits = _maybe_upgrade_with_fallback(question, history, filter_params, hits)
+        hits = _retrieve(question, history, top_k=top_k, filter_params=effective_filter_params, use_history=True)
+        hits = _maybe_upgrade_with_fallback(question, history,  effective_filter_params, hits)
 
         if not hits:
             duration = time.time() - start_time
@@ -1026,7 +1055,7 @@ def ask(
 
         candidate_hits = _select_candidate_hits(hits)
 
-        facet_clarification = _detect_conflict(question, hits, filter_params)
+        facet_clarification = _detect_conflict(question, hits,  effective_filter_params)
         if facet_clarification:
             _, sources, retrieved = _build_context(candidate_hits)
             duration = time.time() - start_time
@@ -1035,7 +1064,7 @@ def ask(
         low_conf_clarification = _detect_low_confidence(
             question,
             hits,
-            filter_params,
+             effective_filter_params,
             allow_generic_rewrite=allow_generic_rewrite,
         )
         if low_conf_clarification:
