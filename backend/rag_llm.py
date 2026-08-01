@@ -647,7 +647,16 @@ def _build_low_confidence_clarification(field: str, values: List[str]) -> str:
 
 
 def _build_generic_refine_clarification(question: str, domain: str) -> str:
-    if domain == "ders_yuku":
+    
+    if domain == "devamsizlik":
+        prompt = (
+        "Devamsızlık sınırı ders veya program türüne göre değişebiliyor. "
+        "Hangi bağlam için soruyorsunuz? "
+        "Örneğin teorik ders, uygulamalı/laboratuvar dersi, "
+        "yabancı dil hazırlık veya uzaktan öğretim olabilir."
+    )
+    elif domain == "ders_yuku":
+    
         prompt = (
             "Sorunuz ders yüküyle ilgili görünüyor ama çok yakın birkaç aday bulundu. "
             "Lütfen sorunuzu biraz daha net yazar mısınız? "
@@ -738,6 +747,25 @@ def _detect_conflict(question: str, hits: List[RankedHit], filter_params: Option
 
     normalized_question = _normalize_text(question)
 
+    generic_attendance_limit = (
+    (
+        "devamsızlık" in normalized_question
+        or "devamsizlik" in normalized_question
+    )
+    and any(
+        signal in normalized_question
+        for signal in ("sınır", "sinir", "kaç", "ne kadar", "oran")
+    )
+)
+
+    if (
+    explicit_domain == "general"
+    and generic_attendance_limit
+):
+        return _build_generic_refine_clarification(
+        question,
+        "devamsizlik",
+    )
     generic_term_reference = bool(
         re.search(
             r"\bd[öo]nem(?:de)?\b",

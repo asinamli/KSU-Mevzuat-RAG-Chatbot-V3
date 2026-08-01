@@ -14,6 +14,11 @@ CLARIFICATION_CASES = [
         "term_scope",
         id="akts-term-scope-clarification",
     ),
+    pytest.param(
+        "Devamsızlık sınırı nedir?",
+        None,
+        id="devamsizlik-clarification",
+    ),
 ]
 
 
@@ -51,7 +56,10 @@ def test_ambiguous_question_requests_expected_clarification(
         allow_generic_rewrite=True,
     )
 
-    expected_prefix = (
+    if expected_clarification_type is None:
+        expected_prefix = f"{rag_llm.CLARIFY_PREFIX}|"
+    else:
+        expected_prefix = (
         f"{rag_llm.CLARIFY_PREFIX}|"
         f"{expected_clarification_type}|"
     )
