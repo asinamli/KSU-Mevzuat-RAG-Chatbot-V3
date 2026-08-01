@@ -19,6 +19,11 @@ CLARIFICATION_CASES = [
         None,
         id="devamsizlik-clarification",
     ),
+    pytest.param(
+    "Sınav hakkı kaç tane?",
+    None,
+    id="sinav-hakki-clarification",
+),
 ]
 
 
@@ -70,3 +75,26 @@ def test_ambiguous_question_requests_expected_clarification(
         f"beklenen tip: {expected_clarification_type!r}, "
         f"gerçek çıktı: {answer!r}"
     )
+
+def test_explicit_exam_type_does_not_request_generic_clarification(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        rag_llm.ollama,
+        "chat",
+        lambda **kwargs: {
+            "message": {
+                "content": "__LLM_GENERATION_CALLED__",
+            }
+        },
+    )
+
+    answer, _, _, _ = rag_llm.ask_with_clarification(
+        question="Ek sınav hakkı kaç tane?",
+        clarification=None,
+        history=[],
+        top_k=12,
+        allow_generic_rewrite=True,
+    )
+
+    assert not answer.startswith(rag_llm.CLARIFY_PREFIX)

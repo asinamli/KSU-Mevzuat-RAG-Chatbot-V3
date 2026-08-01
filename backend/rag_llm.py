@@ -655,6 +655,14 @@ def _build_generic_refine_clarification(question: str, domain: str) -> str:
         "Örneğin teorik ders, uygulamalı/laboratuvar dersi, "
         "yabancı dil hazırlık veya uzaktan öğretim olabilir."
     )
+        
+    elif domain == "sinav":
+        prompt = (
+        "Sınav hakkı sınav türüne ve öğrencinin durumuna göre değişebiliyor. "
+        "Hangi sınav hakkını soruyorsunuz? "
+        "Örneğin ek sınav, mezuniyet sınavı, bütünleme, mazeret sınavı "
+        "veya tek ders sınavı olabilir."
+    )
     elif domain == "ders_yuku":
     
         prompt = (
@@ -759,13 +767,58 @@ def _detect_conflict(question: str, hits: List[RankedHit], filter_params: Option
 )
 
     if (
-    explicit_domain == "general"
-    and generic_attendance_limit
+        explicit_domain == "general"
+        and generic_attendance_limit
 ):
         return _build_generic_refine_clarification(
-        question,
-        "devamsizlik",
+            question,
+            "devamsizlik",
     )
+
+    
+    explicit_exam_type = any(
+        signal in normalized_question
+        for signal in (
+        "ek sınav",
+        "ek sinav",
+        "mezuniyet sınav",
+        "mezuniyet sinav",
+        "bütünleme",
+        "butunleme",
+        "mazeret sınav",
+        "mazeret sinav",
+        "tek ders sınav",
+        "tek ders sinav",
+        "yarıyıl sonu sınav",
+        "yariyil sonu sinav",
+        "yılsonu sınav",
+        "yilsonu sinav",
+        "final",
+        "ara sınav",
+        "ara sinav",
+        "vize",
+    )
+)
+
+    generic_exam_right = (
+        ("sınav" in normalized_question or "sinav" in normalized_question)
+        and "hakk" in normalized_question
+        and any(
+            signal in normalized_question
+            for signal in ("kaç", "kac", "ne kadar")
+    )
+)
+
+    if (
+        explicit_domain == "general"
+        and generic_exam_right
+        and not explicit_exam_type
+    ):
+        return _build_generic_refine_clarification(
+            question,
+            "sinav",
+        )
+
     generic_term_reference = bool(
         re.search(
             r"\bd[öo]nem(?:de)?\b",
