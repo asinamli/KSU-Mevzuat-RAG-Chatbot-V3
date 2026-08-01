@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 
 import rag_llm
-
+import re
 
 pytestmark = pytest.mark.integration
 
@@ -145,3 +145,41 @@ def test_out_of_scope_parking_fee_returns_no_answer(
     )
 
     assert rag_llm.is_no_answer_text(answer)
+
+def test_summer_term_course_hours_context_contains_expected_rule(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured_messages = {}
+
+    def fake_chat(**kwargs):
+        captured_messages["messages"] = kwargs["messages"]
+        return {
+            "message": {
+                "content": "__LLM_GENERATION_CALLED__",
+            }
+        }
+
+    monkeypatch.setattr(
+        rag_llm.ollama,
+        "chat",
+        fake_chat,
+    )
+
+    answer, _, _, _ = rag_llm.ask_with_clarification(
+        question="Yaz öğretiminde kaç ders saati alınabilir?",
+        clarification=None,
+        history=[],
+        top_k=12,
+        allow_generic_rewrite=True,
+    )
+
+    assert answer == "__LLM_GENERATION_CALLED__"
+
+    prompt_text = captured_messages["messages"][-1]["content"].lower()
+
+    assert re.search(
+    r"16\s*\(onaltı\s*\)\s*ders\s*saatini",
+    prompt_text,
+)
+
+    assert "tek ders" in prompt_text
