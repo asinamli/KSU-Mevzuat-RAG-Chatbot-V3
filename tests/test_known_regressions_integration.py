@@ -122,3 +122,26 @@ def test_explicit_special_student_question_does_not_request_clarification(
     )
 
     assert not answer.startswith(rag_llm.CLARIFY_PREFIX)
+
+def test_out_of_scope_parking_fee_returns_no_answer(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        rag_llm.ollama,
+        "chat",
+        lambda **kwargs: {
+            "message": {
+                "content": "__LLM_GENERATION_CALLED__",
+            }
+        },
+    )
+
+    answer, _, _, _ = rag_llm.ask_with_clarification(
+        question="Üniversitenin otopark abonelik ücreti ne kadar?",
+        clarification=None,
+        history=[],
+        top_k=12,
+        allow_generic_rewrite=True,
+    )
+
+    assert rag_llm.is_no_answer_text(answer)

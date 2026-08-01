@@ -605,6 +605,41 @@ def _is_quantity_question(question: str) -> bool:
     q = question.lower()
     return any(x in q for x in ["kaç", "ne kadar", "akts", "kredi", "ders al", "ders alabilir", "ders alabilirim"])
 
+def _has_specific_query_overlap(
+    question: str,
+    hits: List[RankedHit],
+) -> bool:
+    generic_tokens = {
+        "üniversite",
+        "üniversitenin",
+        "ücret",
+        "ücreti",
+        "kaç",
+        "kac",
+        "ne",
+        "kadar",
+        "nedir",
+        "nasıl",
+        "nasil",
+    }
+
+    query_tokens = set(_tokenize_content(question))
+    specific_tokens = query_tokens - generic_tokens
+
+    if not specific_tokens:
+        return True
+
+    context_tokens = set()
+
+    for hit in hits:
+        payload = hit.payload or {}
+        context_tokens.update(
+            _tokenize_content(
+                str(payload.get("text", ""))
+            )
+        )
+
+    return bool(specific_tokens & context_tokens)
 
 def _build_clarification_message(facet: str, values: List[str]) -> str:
     if facet == "term_scope":
@@ -1054,6 +1089,16 @@ def ask(
             return "Mevzuatta bu konuyla ilgili bilgi bulamadım.", [], duration, []
 
         candidate_hits = _select_candidate_hits(hits)
+
+        if not _has_specific_query_overlap(question, candidate_hits):
+            duration = time.time() - start_time
+            return (
+                "Bu soruya ilişkin mevzuatta net bir hüküm bulunmamaktadır.",
+                [],
+                duration,
+                [],
+            )
+    
 
         facet_clarification = _detect_conflict(question, hits,  effective_filter_params)
         if facet_clarification:
