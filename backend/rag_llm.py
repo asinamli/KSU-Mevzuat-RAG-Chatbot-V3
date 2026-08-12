@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import ollama
 from qdrant_client import QdrantClient
-from qdrant_client.models import FieldCondition, Filter, MatchValue
+from qdrant_client.models import FieldCondition, Filter, MatchText, MatchValue
 from sentence_transformers import SentenceTransformer
 
 MODEL_NAME = os.getenv("LLM_MODEL", "gemma3:4b")
@@ -188,8 +188,24 @@ def get_value_label(facet: str, value: str) -> str:
 
 def is_no_answer_text(answer: str) -> bool:
     normalized = _normalize_text(answer)
-    return any(_normalize_text(x) == normalized for x in NO_ANSWER_MESSAGES)
 
+    if any(
+        _normalize_text(message) == normalized
+        for message in NO_ANSWER_MESSAGES
+    ):
+        return True
+
+    for prefix in ("hayır ", "hayir "):
+        if normalized.startswith(prefix):
+            remainder = normalized[len(prefix):].strip()
+
+            if any(
+                _normalize_text(message) == remainder
+                for message in NO_ANSWER_MESSAGES
+            ):
+                return True
+
+    return False
 
 def _normalize_text(text: str) -> str:
     text = text.lower().replace("_", " ")
@@ -374,6 +390,90 @@ def _retrieve_dense_hits(
 
     return response.points or []
 
+def _extract_definition_term(question: str) -> Optional[str]:
+    q = question.strip()
+
+    patterns = (
+        r"^(.{1,50}?)\s+kısaltması\s+ne\s+anlama\s+gelir\??$",
+        r"^(.{1,50}?)\s+açılımı\s+nedir\??$",
+        r"^(.{1,50}?)\s+ne\s+demektir\??$",
+        r"^([\wÇĞİÖŞÜçğıöşü\-]{2,40})\s+nedir\??$",
+    )
+
+    for pattern in patterns:
+        match = re.match(pattern, q, re.IGNORECASE)
+
+        if match:
+            return match.group(1).strip(" '\"“”")
+
+    return None
+
+
+def _retrieve_definition_hits(
+    question: str,
+    top_k: int,
+    filter_params: Optional[Dict[str, Any]],
+) -> List[Any]:
+    term = _extract_definition_term(question)
+
+    if not term:
+        return []
+
+    assert embed_model is not None
+    assert client is not None
+
+    query_embedding = embed_model.encode(
+        f"query: Tanımlar {term}",
+        normalize_embeddings=True,
+    )
+
+    base_filter = _build_filter(filter_params)
+    must_conditions = list(base_filter.must or []) if base_filter else []
+
+    must_conditions.append(
+        FieldCondition(
+            key="text",
+            match=MatchText(text=term),
+        )
+    )
+
+    response = client.query_points(
+        collection_name=COLLECTION_NAME,
+        query=query_embedding.tolist(),
+        query_filter=Filter(must=must_conditions),
+        limit=max(top_k, 50),
+    )
+
+    return response.points or []
+
+def _has_explicit_definition_candidate(
+    question: str,
+    hits: List[RankedHit],
+) -> bool:
+    term = _extract_definition_term(question)
+
+    if not term:
+        return False
+
+    for hit in hits:
+        payload = hit.payload or {}
+
+        raw_text = " ".join(
+            [
+                str(payload.get("madde_header", "") or ""),
+                str(payload.get("madde", "") or ""),
+                str(payload.get("text", "") or ""),
+            ]
+        )
+
+        if re.search(
+            rf"(?<!\w){re.escape(term)}\s*:",
+            raw_text,
+            re.IGNORECASE,
+        ):
+            return True
+
+    return False
 
 def _lexical_score(question: str, payload: Dict[str, Any]) -> float:
     question_norm = _normalize_text(question)
@@ -398,8 +498,14 @@ def _lexical_score(question: str, payload: Dict[str, Any]) -> float:
     coverage = matched / max(len(query_tokens), 1)
 
     phrase_bonus = 0.0
-    if question_norm and len(question_norm.split()) >= 3 and question_norm in haystack_norm:
+
+    if (
+        question_norm
+        and len(question_norm.split()) >= 3
+        and question_norm in haystack_norm
+):
         phrase_bonus += 0.12
+
 
     bigrams = []
     q_words = question_norm.split()
@@ -446,6 +552,24 @@ def _rerank_hits(question: str, hits: List[Any]) -> List[RankedHit]:
         dense_score = float(hit.score or 0.0)
         lexical_score = _lexical_score(question, payload)
         rerank_score = (0.72 * dense_score) + (0.28 * lexical_score)
+        definition_term = _extract_definition_term(question)
+
+        if definition_term:
+            raw_text = " ".join(
+                [
+                    str(payload.get("madde_header", "") or ""),
+                    str(payload.get("madde", "") or ""),
+                    str(payload.get("text", "") or ""),
+                ]
+            )
+
+            if re.search(
+                rf"(?<!\w){re.escape(definition_term)}\s*:",
+                raw_text,
+                re.IGNORECASE,
+            ):
+                rerank_score += 0.20
+
         rerank_score = max(0.0, min(rerank_score, 1.0))
 
         ranked.append(
@@ -469,8 +593,33 @@ def _retrieve(
     filter_params: Optional[Dict[str, Any]],
     use_history: bool = True,
 ) -> List[RankedHit]:
-    dense_hits = _retrieve_dense_hits(question, history, top_k=top_k, filter_params=filter_params, use_history=use_history)
-    return _rerank_hits(question, dense_hits)
+    dense_hits = _retrieve_dense_hits(
+        question,
+        history,
+        top_k=top_k,
+        filter_params=filter_params,
+        use_history=use_history,
+)
+
+    definition_hits = _retrieve_definition_hits(
+        question=question,
+        top_k=top_k,
+        filter_params=filter_params,
+)
+
+    combined_hits = list(dense_hits)
+    seen_ids = {str(hit.id) for hit in combined_hits}
+
+    for hit in definition_hits:
+        hit_id = str(hit.id)
+
+        if hit_id in seen_ids:
+            continue
+
+        seen_ids.add(hit_id)
+        combined_hits.append(hit)
+
+    return _rerank_hits(question, combined_hits)
 
 
 def _best_score(hits: List[RankedHit]) -> float:
@@ -556,6 +705,87 @@ def _select_candidate_hits(hits: List[RankedHit]) -> List[RankedHit]:
 
     return unique_candidates[:4]
 
+def _expand_same_article_for_list_question(
+    question: str,
+    filter_params: Optional[Dict[str, Any]],
+    candidates: List[RankedHit],
+) -> List[RankedHit]:
+    if not candidates:
+        return candidates
+
+    q = _normalize_text(question)
+
+    list_signals = (
+        "hangi belgeler",
+        "görevleri nelerdir",
+        "gorevleri nelerdir",
+        "hangi durumlarda",
+        "şartları nelerdir",
+        "sartlari nelerdir",
+        "şartlar nelerdir",
+        "sartlar nelerdir",
+    )
+
+    if not any(signal in q for signal in list_signals):
+        return candidates
+
+    anchor = next(
+        (
+            hit
+            for hit in candidates
+            if (hit.payload or {}).get("source")
+            and (hit.payload or {}).get("madde_no") is not None
+        ),
+        None,
+    )
+
+    if anchor is None:
+        return candidates
+
+    anchor_payload = anchor.payload or {}
+    anchor_source = anchor_payload.get("source")
+    anchor_madde_no = anchor_payload.get("madde_no")
+
+    expanded_hits = _retrieve(
+        question=question,
+        history=[],
+        top_k=30,
+        filter_params=filter_params,
+        use_history=False,
+    )
+
+    result = list(candidates)
+
+    seen = {
+        (hit.payload or {}).get("chunk_uid")
+        or _normalize_text(str((hit.payload or {}).get("text", "")))
+        for hit in result
+    }
+
+    for hit in expanded_hits:
+        payload = hit.payload or {}
+
+        if (
+            payload.get("source") != anchor_source
+            or payload.get("madde_no") != anchor_madde_no
+        ):
+            continue
+
+        identity = (
+            payload.get("chunk_uid")
+            or _normalize_text(str(payload.get("text", "")))
+        )
+
+        if identity in seen:
+            continue
+
+        seen.add(identity)
+        result.append(hit)
+
+        if len(result) >= 8:
+            break
+
+    return result
 
 def _collect_facet_values(hits: List[RankedHit], facet: str) -> List[str]:
     values: List[str] = []
@@ -641,6 +871,32 @@ def _has_specific_query_overlap(
 
     return bool(specific_tokens & context_tokens)
 
+def _has_required_explicit_term_support(
+    question: str,
+    hits: List[RankedHit],
+) -> bool:
+    normalized_question = _normalize_text(question)
+
+    explicit_term_groups = [
+        ("ücretsiz", "ucretsiz"),
+    ]
+
+    for terms in explicit_term_groups:
+        if not any(term in normalized_question for term in terms):
+            continue
+
+        for hit in hits:
+            text = _normalize_text(
+                str((hit.payload or {}).get("text", ""))
+            )
+
+            if any(term in text for term in terms):
+                return True
+
+        return False
+
+    return True
+
 def _build_clarification_message(facet: str, values: List[str]) -> str:
     if facet == "term_scope":
         question = "Bunu normal dönem için mi yoksa yaz öğretimi için mi soruyorsunuz?"
@@ -675,7 +931,9 @@ def _is_under_specified_question(question: str) -> bool:
         "şart", "şartı", "genel not ortalaması", "gno", "başvuru", "başvuru şartı",
         "başvuru tarihi", "ne zaman", "kaç", "ne kadar", "akts", "süre", "süresi",
         "zorunlu", "zorunluluğu", "muafiyet", "intibak", "kurumlar arası",
-        "kurumlararası", "stajın", "not ortalaması",
+        "kurumlararası", "stajın", "not ortalaması","açılır", "acilir",
+        "hangi durumlarda",
+        "görevleri", "gorevleri",
     ]
 
     has_specific_signal = any(sig in q for sig in specificity_signals) or any(ch.isdigit() for ch in q)
@@ -814,9 +1072,19 @@ def _detect_conflict(question: str, hits: List[RankedHit], filter_params: Option
         "devamsızlık" in normalized_question
         or "devamsizlik" in normalized_question
     )
-    and any(
-        signal in normalized_question
-        for signal in ("sınır", "sinir", "kaç", "ne kadar", "oran")
+    and (
+        "sınır" in normalized_question
+        or "sinir" in normalized_question
+        or (
+            any(
+                signal in normalized_question
+                for signal in ("kaç", "kac", "ne kadar", "nedir")
+            )
+            and any(
+                signal in normalized_question
+                for signal in ("oran", "yüzde", "yuzde")
+            )
+        )
     )
 )
 
@@ -950,6 +1218,9 @@ def _detect_low_confidence(
     if len(candidates) < 2:
         return None
 
+    if _has_explicit_definition_candidate(question, candidates):
+        return None
+
     metrics = _score_metrics(candidates)
     low_confidence = (
         metrics["top_score"] < LOW_CONF_TOP_SCORE_THRESHOLD
@@ -995,6 +1266,220 @@ def _detect_low_confidence(
 
     return _build_generic_refine_clarification(question, explicit_domain)
 
+def _is_conditional_numeric_question(question: str) -> bool:
+    q = _normalize_text(question)
+
+    question_signals = (
+        "kaç",
+        "kac",
+        "ne kadar",
+    )
+
+    condition_signals = (
+        "en fazla",
+        "en az",
+        "azami",
+        "asgari",
+        "kullanmadan",
+        "kullanarak",
+        "girmeden",
+        "şartıyla",
+        "sartiyla",
+        "durumunda",
+        "halinde",
+        "kalan",
+    )
+
+    target_units = (
+        "yarıyıl",
+        "yariyil",
+        "yıl",
+        "yil",
+        "ay",
+        "gün",
+        "gun",
+        "ders",
+        "kredi",
+        "akts",
+        "puan",
+        "süre",
+        "sure",
+    )
+
+    return (
+        any(signal in q for signal in question_signals)
+        and any(signal in q for signal in condition_signals)
+        and any(unit in q for unit in target_units)
+    )
+
+
+def _split_numbered_passages(text: str) -> List[str]:
+    parts = re.split(
+        r"(?m)(?=^\s*(?:"
+        r"\d+\s*(?:\\)?[\.\)]"
+        r"|\(\d+\)"
+        r"|.*?\bMADDE\s+\d+\s*[–—-]"
+        r"))",
+        text,
+    )
+
+    return [
+        part.strip()
+        for part in parts
+        if part.strip()
+    ]
+
+
+def _focus_numeric_evidence_for_generation(
+    question: str,
+    candidates: List[RankedHit],
+) -> List[RankedHit]:
+    if not candidates:
+        return candidates
+
+    if not _is_conditional_numeric_question(question):
+        return candidates
+
+    question_tokens = set(_tokenize_content(question))
+    question_norm = _normalize_text(question)
+
+    condition_signals = (
+        "en fazla",
+        "en az",
+        "azami",
+        "asgari",
+        "kullanmadan",
+        "kullanarak",
+        "girmeden",
+        "şartıyla",
+        "sartiyla",
+        "durumunda",
+        "halinde",
+        "kalan",
+    )
+
+    scored_passages = []
+
+    for hit in candidates:
+        payload = hit.payload or {}
+        text = str(payload.get("text", "") or "")
+
+        for passage in _split_numbered_passages(text):
+            passage_tokens = set(_tokenize_content(passage))
+            passage_norm = _normalize_text(passage)
+
+            overlap = len(question_tokens & passage_tokens)
+            coverage = overlap / max(len(question_tokens), 1)
+
+            soft_matches = 0
+            for question_token in question_tokens:
+                if question_token in passage_tokens:
+                    continue
+                if len(question_token) < 5:
+                    continue
+
+                if any(
+                    len(passage_token) >= 5
+                    and question_token[:5] == passage_token[:5]
+                    for passage_token in passage_tokens
+                ):
+                    soft_matches += 1
+
+            soft_overlap_bonus = min(
+                0.15,
+                soft_matches * 0.03,
+            )
+
+
+            condition_bonus = sum(
+                0.06
+                for signal in condition_signals
+                if signal in question_norm
+                and signal in passage_norm
+            )
+
+            score = coverage + condition_bonus + soft_overlap_bonus
+
+            scored_passages.append(
+                (score, hit, passage)
+            )
+
+    if len(scored_passages) < 2:
+        return candidates
+
+    scored_passages.sort(
+        key=lambda item: item[0],
+        reverse=True,
+    )
+
+    unique_passages = []
+
+    for score, hit, passage in scored_passages:
+        passage_norm = _normalize_text(passage)
+
+        is_overlap_duplicate = any(
+            len(passage_norm) >= 80
+            and len(existing_norm) >= 80
+            and (
+                passage_norm in existing_norm
+                or existing_norm in passage_norm
+            )
+            for _, _, _, existing_norm in unique_passages
+        )
+
+        if is_overlap_duplicate:
+            continue
+
+        unique_passages.append(
+            (score, hit, passage, passage_norm)
+        )
+
+    if len(unique_passages) < 2:
+        return candidates
+
+    best_score, best_hit, best_passage, _ = unique_passages[0]
+    second_score = unique_passages[1][0]
+
+    # Belirgin bir kazanan yoksa mevcut context'i koru.
+    if (
+        best_score < 0.25
+        or best_score - second_score < 0.08
+    ):
+        return candidates
+
+    focused_text = best_passage
+
+    best_hit_text = str(
+        (best_hit.payload or {}).get("text", "") or ""
+    )
+
+    best_parts = _split_numbered_passages(best_hit_text)
+    best_passage_norm = _normalize_text(best_passage)
+
+    for index, part in enumerate(best_parts):
+        if _normalize_text(part) != best_passage_norm:
+            continue
+
+        if index + 1 < len(best_parts):
+            focused_text = (
+                f"{part}\n\n"
+                f"{best_parts[index + 1]}"
+        )
+
+        break
+
+    focused_payload = dict(best_hit.payload or {})
+    focused_payload["text"] = focused_text
+
+    return [
+        RankedHit(
+            payload=focused_payload,
+            score=best_hit.score,
+            dense_score=best_hit.dense_score,
+            lexical_score=best_hit.lexical_score,
+            rerank_score=best_hit.rerank_score,
+        )
+    ]
 
 def _build_context(
 hits: List[RankedHit]) -> Tuple[str, List[str], List[Dict[str, Any]]]:
@@ -1045,15 +1530,38 @@ hits: List[RankedHit]) -> Tuple[str, List[str], List[Dict[str, Any]]]:
 
 
 def _build_system_prompt() -> str:
-    return """Sen KSÜ Üniversitesi mevzuatları konusunda uzman bir danışmansın.
+    return """Sen KSÜ mevzuat danışmanısın.
 
-Kurallar:
-1. Sadece sana verilen mevzuat parçalarını kullan.
-2. Mevzuatta açık hüküm yoksa bunu açıkça söyle.
-3. Cevabı kısa, net ve öğrencinin anlayacağı şekilde ver.
-4. Mevzuat parçasında madde veya sayfa bilgisi varsa mümkünse belirt.
-5. Dışarıdan bilgi uydurma."""
+Yalnızca sana verilen mevzuat parçalarını kullan.
 
+Her soru için iki davranıştan SADECE BİRİNİ seç:
+
+1. Sorudaki spesifik durum mevzuat parçalarında açıkça destekleniyorsa:
+   - Soruyu kısa ve net cevapla.
+   - Mevzuatta bulunan madde veya kaynak bilgisini mümkünse belirt.
+   - Aşağıdaki sabit ret cümlesini cevap sonuna ASLA ekleme.
+   - Soru birden fazla konuyu birlikte soruyorsa ve her konu verilen mevzuat
+     parçalarında ayrı ayrı açıkça düzenlenmişse, bu açık hükümleri birlikte
+     kullanarak cevap verebilirsin.
+   
+
+2. Sorudaki spesifik durum mevzuat parçalarında açıkça desteklenmiyorsa:
+   - Yakın veya benzer maddelerden sonuç çıkarma.
+   - Yorum, kıyas veya varsayım üretme.
+   - Bir şeyin yasak olduğunun yazmaması, onun serbest olduğu anlamına gelmez.
+   - Bir şeyin izinli olduğunun yazmaması, onun yasak olduğu anlamına gelmez.
+   - Benzer görünen fakat farklı hukuki kavramları birbirinin yerine koyma.
+   - Sorudaki işlem, koşul veya statü mevzuatta açıkça aynı şekilde
+     düzenlenmiyorsa yakın bir hükümden sonuç çıkarma.
+   - Evet/hayır sorularında, cevap vermeden önce mevzuat parçasının sorudaki
+     özne, işlem ve koşulu doğrudan desteklediğinden emin ol.
+   - Sorudaki işlem yerine yalnızca benzer veya ilişkili başka bir işlem
+     düzenleniyorsa evet/hayır sonucu çıkarma.
+   - Bu durumda SADECE şu cümleyi yaz:
+     Bu soruya ilişkin mevzuatta net bir hüküm bulunmamaktadır.
+
+Bilgiye dayalı bir cevap verdiysen sabit ret cümlesini ayrıca ekleme.
+Mevzuatta açıkça desteklenmeyen bilgiyi uydurma."""
 
 def ask(
     question: str,
@@ -1090,6 +1598,30 @@ def ask(
 
         candidate_hits = _select_candidate_hits(hits)
 
+        candidate_hits = _expand_same_article_for_list_question(
+    question,
+    effective_filter_params,
+    candidate_hits,
+)
+
+        question_norm = _normalize_text(question)
+
+        if re.search(
+            r"\byabancı\s+dilde\s+(öğretim|eğitim)\b"
+            r"|\byabanci\s+dilde\s+(ogretim|egitim)\b",
+            question_norm,
+            re.IGNORECASE,
+        ):
+            context_candidates = [
+                hit
+                for hit in candidate_hits
+                if (hit.payload or {}).get("topic_domain")
+                != "yabanci_dil_hazirlik"
+            ]
+
+            if context_candidates:
+                candidate_hits = context_candidates
+
         if not _has_specific_query_overlap(question, candidate_hits):
             duration = time.time() - start_time
             return (
@@ -1098,7 +1630,53 @@ def ask(
                 duration,
                 [],
             )
-    
+        
+        
+        if not _has_required_explicit_term_support(
+            question,
+            candidate_hits,
+        ):
+            duration = time.time() - start_time
+            return (
+                "Bu soruya ilişkin mevzuatta net bir hüküm bulunmamaktadır.",
+                [],
+                duration,
+                [],
+            )
+
+        explicit_student_status = explicit_facets.get("student_status")
+
+        is_yes_no_question = bool(
+            re.search(
+                r"\b(mı|mi|mu|mü|mıdır|midir|mudur|müdür)\b",
+                _normalize_text(question),
+                re.IGNORECASE,
+            )
+        )
+
+        special_student_statuses = {
+            "cift_anadal_yandal",
+            "uluslararasi_ogrenci",
+            "ozel_ogrenci",
+        }
+
+        if (
+            explicit_student_status is None
+            and is_yes_no_question
+            and candidate_hits
+            and all(
+                (hit.payload or {}).get("student_status")
+                in special_student_statuses
+                for hit in candidate_hits
+            )
+        ):
+            duration = time.time() - start_time
+            return (
+                "Bu soruya ilişkin mevzuatta net bir hüküm bulunmamaktadır.",
+                [],
+                duration,
+                [],
+            )       
 
         facet_clarification = _detect_conflict(question, hits,  effective_filter_params)
         if facet_clarification:
@@ -1124,7 +1702,27 @@ def ask(
             duration = time.time() - start_time
             return "Bu soruya ilişkin mevzuatta net bir hüküm bulunmamaktadır.", [], duration, []
 
-        context_text, unique_sources, retrieved = _build_context(candidate_hits)
+        generation_hits = _focus_numeric_evidence_for_generation(
+        question,
+        candidate_hits,
+        )
+
+        context_text, _, _ = _build_context(generation_hits)
+        _, unique_sources, retrieved = _build_context(candidate_hits)
+
+        extra_instruction = ""
+
+        if _is_conditional_numeric_question(question):
+            extra_instruction = (
+                "\n\nEK TALİMAT:\n"
+                "Bu soru koşullu ve sayısal bir mevzuat sorusudur. "
+                "Verilen ardışık hükümler aynı durumun süresini ve bu sürenin "
+                "sonundaki sonucu açıkça düzenliyorsa bu hükümleri birlikte değerlendir. "
+                "Süreyi doğrudan süreyi belirleyen hükümden al. "
+                "Sorunun farklı ifadelerle aynı koşulu anlatması tek başına ret nedeni değildir. "
+                "Bunun dışında benzer veya yakın başka hükümlerden kıyas yapma."
+            )
+        
 
         messages: List[Dict[str, str]] = [{"role": "system", "content": _build_system_prompt()}]
         if _should_use_generation_history(question, history, filter_params):
@@ -1132,14 +1730,21 @@ def ask(
         messages.append(
             {
                 "role": "user",
-                "content": f"MEVZUAT BİLGİLERİ:\n{context_text}\n\nSORU: {question}",
+                "content": (
+                f"MEVZUAT BİLGİLERİ:\n{context_text}"
+                f"{extra_instruction}"
+                f"\n\nSORU: {question}"
+),
             }
         )
 
         response = ollama.chat(
             model=MODEL_NAME,
             messages=messages,
-            options={"temperature": 0.0},
+            options={
+                "temperature": 0.0,
+                "seed": 42,
+},
         )
 
         answer = response["message"]["content"].strip()

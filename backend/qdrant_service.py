@@ -106,7 +106,15 @@ def create_payload_indexes(client: QdrantClient) -> None:
             )
         except Exception:
             logger.debug("Bool index atlandı: %s", field_name)
-
+    try:
+            client.create_payload_index(
+        COLLECTION_NAME,
+        field_name="text",
+        field_schema=models.PayloadSchemaType.TEXT,
+        wait=True,
+    )
+    except Exception:
+            logger.debug("Text index atlandı: text")
 
 def build_chunks() -> List[Dict[str, Any]]:
     files_dir = os.getenv("FILES_DIR", "files")
