@@ -12,7 +12,7 @@ from qdrant_client import QdrantClient
 from qdrant_client.models import FieldCondition, Filter, MatchText, MatchValue
 from sentence_transformers import SentenceTransformer
 
-MODEL_NAME = os.getenv("LLM_MODEL", "gemma3:4b")
+MODEL_NAME = os.getenv("LLM_MODEL", "gemma2:latest")
 COLLECTION_NAME = os.getenv("QDRANT_COLLECTION", "mevzuat_rag")
 QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
 EMBED_MODEL = os.getenv("EMBED_MODEL", "ytu-ce-cosmos/turkish-e5-large")
