@@ -29,3 +29,6 @@ backend/files/
 
 RAG_WEB.jpeg
 rag-web-arayüz.jpeg
+
+tests/data/evaluation_results_*.json
+tests/data/holdout_results_*.json
