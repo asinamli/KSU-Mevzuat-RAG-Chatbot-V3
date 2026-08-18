@@ -213,6 +213,76 @@ def _normalize_text(text: str) -> str:
     text = re.sub(r"\s+", " ", text).strip()
     return text
 
+_TURKISH_LEXICAL_SUFFIXES = (
+    # Uzun ekler önce kontrol edilir.
+    "larının",
+    "lerinin",
+    "ının",
+    "inin",
+    "unun",
+    "ünün",
+    "ınca",
+    "ince",
+    "unca",
+    "ünce",
+    "ması",
+    "mesi",
+    "mış",
+    "miş",
+    "muş",
+    "müş",
+    "acak",
+    "ecek",
+    "dır",
+    "dir",
+    "dur",
+    "dür",
+    "tır",
+    "tir",
+    "tur",
+    "tür",
+    "dan",
+    "den",
+    "tan",
+    "ten",
+    "lar",
+    "ler",
+    "ın",
+    "in",
+    "un",
+    "ün",
+    "ır",
+    "ir",
+    "ur",
+    "ür",
+)
+
+
+def _normalize_turkish_lexical_token(token: str) -> str:
+    normalized = _normalize_text(token)
+
+    if not normalized or " " in normalized:
+        return normalized
+
+    for suffix in _TURKISH_LEXICAL_SUFFIXES:
+        if not normalized.endswith(suffix):
+            continue
+
+        stem = normalized[:-len(suffix)]
+
+        # Çok kısa kök üretip false-positive yaratma.
+        if len(stem) >= 4:
+            return stem
+
+    # Tek sesli harfli belirtme/iyelik eklerini daha muhafazakâr ele al.
+    if (
+        len(normalized) >= 6
+        and normalized[-1] in "ıiuü"
+        and len(normalized[:-1]) >= 5
+    ):
+        return normalized[:-1]
+
+    return normalized
 
 def _tokenize_content(text: str) -> List[str]:
     normalized = _normalize_text(text)
@@ -494,8 +564,35 @@ def _lexical_score(question: str, payload: Dict[str, Any]) -> float:
     haystack_norm = _normalize_text(haystack)
     haystack_tokens = set(_tokenize_content(haystack))
 
-    matched = len(query_tokens & haystack_tokens)
-    coverage = matched / max(len(query_tokens), 1)
+    exact_tokens = query_tokens & haystack_tokens
+    exact_matched = len(exact_tokens)
+
+    haystack_lexical_forms = {
+        _normalize_turkish_lexical_token(token)
+        for token in haystack_tokens
+        if len(_normalize_turkish_lexical_token(token)) >= 4
+    }
+
+    stem_only_matched = 0
+
+    for token in query_tokens:
+        if token in exact_tokens:
+            continue
+
+        lexical_form = _normalize_turkish_lexical_token(token)
+
+        if len(lexical_form) < 4:
+            continue
+
+        if lexical_form in haystack_lexical_forms:
+            stem_only_matched += 1
+
+    stem_match_weight = 0.60
+
+    coverage = (
+        exact_matched
+        + (stem_match_weight * stem_only_matched)
+    ) / max(len(query_tokens), 1)
 
     phrase_bonus = 0.0
 
@@ -703,7 +800,28 @@ def _select_candidate_hits(hits: List[RankedHit]) -> List[RankedHit]:
         seen_texts.add(text)
         unique_candidates.append(hit)
 
-    return unique_candidates[:4]
+    primary_limit = 4
+    max_candidate_limit = 6
+    near_tie_margin = 0.01
+
+    if len(unique_candidates) <= primary_limit:
+        return unique_candidates
+
+    selected = unique_candidates[:primary_limit]
+    cutoff_score = float(selected[-1].score or 0.0)
+
+    for hit in unique_candidates[primary_limit:]:
+        if len(selected) >= max_candidate_limit:
+            break
+
+        hit_score = float(hit.score or 0.0)
+
+        if cutoff_score - hit_score > near_tie_margin:
+            break
+
+        selected.append(hit)
+
+    return selected
 
 def _expand_same_article_for_list_question(
     question: str,

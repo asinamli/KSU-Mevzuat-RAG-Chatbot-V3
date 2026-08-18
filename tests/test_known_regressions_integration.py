@@ -452,3 +452,43 @@ def test_conditional_numeric_question_focuses_best_evidence_passage(
     "tek başına ret nedeni değildir"
     in prompt
 )
+    
+
+def test_mazeret_question_retrieves_explicit_management_board_rule():
+    from backend import rag_llm
+
+    rag_llm.initialize_rag()
+
+    question = (
+        "Bir öğrencinin mazeretinin geçerli sayılması için "
+        "hangi kurulun kabulü gerekir?"
+    )
+
+    hits = rag_llm._retrieve(
+        question=question,
+        history=[],
+        top_k=12,
+        filter_params={},
+        use_history=False,
+    )
+
+    hits = rag_llm._maybe_upgrade_with_fallback(
+        question,
+        [],
+        {},
+        hits,
+    )
+
+    candidates = rag_llm._select_candidate_hits(hits)
+
+    context = "\n".join(
+        str((hit.payload or {}).get("text", ""))
+        for hit in candidates
+    )
+
+    normalized_context = rag_llm._normalize_text(context)
+
+    assert (
+        "ilgili birim yönetim kurulunca kabul edilmesiyle geçerli sayılır"
+        in normalized_context
+    )

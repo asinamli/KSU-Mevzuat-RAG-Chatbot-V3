@@ -1,0 +1,56 @@
+﻿{
+  "name": "stage1_holdout",
+  "description": "Aşama 1 kapanışı için gerçek KSÜ mevzuatından oluşturulan, ana evaluation setinden bağımsız 10 holdout soru.",
+  "cases": [
+    {
+      "case_id": "holdout_001",
+      "question": "Öğrenim süresi beş yıl olan lisans programında azami öğrenim süresi kaç yıldır?",
+      "expected_terms": ["sekiz yıl", "8 yıl"]
+    },
+    {
+      "case_id": "holdout_002",
+      "question": "KSÜ Akademik Danışmanlık Yönergesini kim yürütür?",
+      "expected_terms": ["Kahramanmaraş Sütçü İmam Üniversitesi Rektörü", "Rektör"]
+    },
+    {
+      "case_id": "holdout_003",
+      "question": "Lisans programına kayıtlı öğrencinin sertifika programı için ödeyeceği ücret neye göre hesaplanır?",
+      "expected_terms": ["ilgili dönemde alacakları derslerin kredilerinin toplam kredi içindeki payına göre"]
+    },
+    {
+      "case_id": "holdout_004",
+      "question": "Kayıt dondurmuş olmak yatay geçiş hakkından yararlanmaya engel midir?",
+      "expected_terms": ["engel teşkil etmez", "engel değildir"]
+    },
+    {
+      "case_id": "holdout_005",
+      "question": "Bitirme Tezi ve Seminer sınavlarının şekli kim tarafından belirlenir?",
+      "expected_terms": ["bölüm başkanlığınca", "bölüm başkanlığı"]
+    },
+    {
+      "case_id": "holdout_006",
+      "question": "Yabancı uyruklu lisansüstü adaylar başvuruyu şahsen dışında nasıl yapabilir?",
+      "expected_terms": ["üniversite web sitesinden online", "online"]
+    },
+    {
+      "case_id": "holdout_007",
+      "question": "Bir öğrencinin mazeretinin geçerli sayılması için hangi kurulun kabulü gerekir?",
+      "expected_terms": ["ilgili birim yönetim kurulu", "birim yönetim kurulunca"]
+    },
+    {
+      "case_id": "holdout_008",
+      "question": "UME öğrencisi hangi yarıyılda olan öğrenci olarak tanımlanır?",
+      "expected_terms": ["8. yarıyıl", "sekizinci yarıyıl"]
+    },
+    {
+      "case_id": "holdout_009",
+      "question": "Birinci stajını başarı ile bitiremeyen öğrenci ikinci stajını yapabilir mi?",
+      "expected_terms": ["yapamaz", "hayır"]
+    },
+    {
+      "case_id": "holdout_010",
+      "question": "Örgün öğretim programlarındaki bir yarıyıl derslerinin en fazla yüzde kaçı uzaktan öğretim yoluyla verilebilir?",
+      "expected_terms": ["%30", "yüzde 30", "30"]
+    }
+  ]
+}
