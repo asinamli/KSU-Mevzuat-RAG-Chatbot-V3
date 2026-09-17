@@ -37,12 +37,20 @@ def test_health_endpoint():
 
 
 def test_ask_endpoint_returns_rag_answer(monkeypatch):
+    retrieved = [
+        {
+            "source": "test-belge.pdf",
+            "source_url": "https://example.com/test-belge.pdf",
+            "text": "Test içerik",
+        }
+    ]
+
     def fake_ask(**kwargs):
         return (
             "Test cevabı",
-            [],
-            0.12,
-            [],
+            ["test-belge.pdf"],
+            0.126,
+            retrieved,
         )
 
     monkeypatch.setattr(api.rag_llm, "ask", fake_ask)
@@ -55,9 +63,30 @@ def test_ask_endpoint_returns_rag_answer(monkeypatch):
     assert response.status_code == 200
 
     body = response.json()
+
+    assert set(body) == {
+        "answer",
+        "sources",
+        "source_links",
+        "duration",
+        "retrieved",
+        "session_id",
+        "needs_clarification",
+        "clarification_options",
+    }
     assert body["answer"] == "Test cevabı"
-    assert body["needs_clarification"] is False
+    assert body["sources"] == ["test-belge.pdf"]
+    assert body["source_links"] == [
+        {
+            "source": "test-belge.pdf",
+            "url": "https://example.com/test-belge.pdf",
+        }
+    ]
+    assert body["duration"] == 0.13
+    assert body["retrieved"] == retrieved
     assert body["session_id"]
+    assert body["needs_clarification"] is False
+    assert body["clarification_options"] is None
 
 
 def test_ask_rejects_empty_question():
@@ -120,3 +149,110 @@ def test_session_history_and_delete(monkeypatch):
     )
 
     assert history_after_delete.json()["history"] == []
+
+
+def test_ask_endpoint_returns_clarification(monkeypatch):
+    def fake_ask(**kwargs):
+        return (
+            f"{api.rag_llm.CLARIFY_PREFIX}|term_scope|normal_donem,yaz_okulu|Hangi dönem için soruyorsunuz?",
+            [],
+            0.10,
+            [],
+        )
+
+    monkeypatch.setattr(api.rag_llm, "ask", fake_ask)
+
+    response = client.post(
+        "/ask",
+        json={
+            "question": "Kaç AKTS alabilirim?",
+            "session_id": "clarification-session",
+        },
+    )
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert body["answer"] == "Hangi dönem için soruyorsunuz?"
+    assert body["sources"] == []
+    assert body["source_links"] == []
+    assert body["duration"] == 0.10
+    assert body["retrieved"] == []
+    assert body["session_id"] == "clarification-session"
+    assert body["needs_clarification"] is True
+    assert body["clarification_options"] == {
+        "type": "term_scope",
+        "message": "Hangi dönem için soruyorsunuz?",
+        "options": [
+            {
+                "value": "normal_donem",
+                "label": "Normal dönem",
+            },
+            {
+                "value": "yaz_okulu",
+                "label": "Yaz öğretimi",
+            },
+        ],
+    }
+
+
+def test_ask_applies_clarification_to_original_question(monkeypatch):
+    calls = []
+
+    def fake_ask(**kwargs):
+        calls.append(kwargs)
+
+        if len(calls) == 1:
+            return (
+                f"{api.rag_llm.CLARIFY_PREFIX}|term_scope|normal_donem,yaz_okulu|Hangi dönem için soruyorsunuz?",
+                [],
+                0.10,
+                [],
+            )
+
+        return (
+            "Yaz öğretimi için test cevabı",
+            [],
+            0.20,
+            [],
+        )
+
+    monkeypatch.setattr(api.rag_llm, "ask", fake_ask)
+
+    first_response = client.post(
+        "/ask",
+        json={
+            "question": "Kaç AKTS alabilirim?",
+            "session_id": "clarification-session",
+        },
+    )
+
+    assert first_response.status_code == 200
+    assert first_response.json()["needs_clarification"] is True
+
+    second_response = client.post(
+        "/ask",
+        json={
+            "question": "yaz_okulu",
+            "session_id": "clarification-session",
+            "clarification": {
+                "term_scope": "yaz_okulu",
+            },
+        },
+    )
+
+    assert second_response.status_code == 200
+
+    body = second_response.json()
+
+    assert body["answer"] == "Yaz öğretimi için test cevabı"
+    assert body["session_id"] == "clarification-session"
+    assert body["needs_clarification"] is False
+    assert body["clarification_options"] is None
+
+    assert calls[1]["question"] == "Kaç AKTS alabilirim?"
+    assert calls[1]["filter_params"] == {
+        "term_scope": "yaz_okulu",
+    }
+
