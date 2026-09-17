@@ -8,9 +8,8 @@ from typing import Any, Dict, List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-
 import rag_llm
+from api_schemas import HealthResponse, QuestionRequest, QuestionResponse
 
 logger = logging.getLogger(__name__)
 
@@ -53,32 +52,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-class QuestionRequest(BaseModel):
-    question: str = Field(..., min_length=1, description="Kullanıcı sorusu")
-    session_id: Optional[str] = Field(None, description="Oturum ID")
-    clarification: Optional[Dict[str, str]] = Field(
-        None,
-        description="Belirsizlik giderme filtresi",
-    )
-
-
-class QuestionResponse(BaseModel):
-    answer: str
-    sources: List[str]
-    source_links: List[Dict[str, Optional[str]]] = []
-    duration: float
-    retrieved: List[Dict[str, Any]]
-    session_id: str
-    needs_clarification: bool = False
-    clarification_options: Optional[Dict[str, Any]] = None
-
-
-class HealthResponse(BaseModel):
-    status: str
-    rag_ready: bool
-    model: str
-    collection: str
 
 
 @app.get("/", response_model=Dict[str, str])
