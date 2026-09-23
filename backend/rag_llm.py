@@ -11,11 +11,14 @@ import ollama
 from qdrant_client import QdrantClient
 from qdrant_client.models import FieldCondition, Filter, MatchText, MatchValue
 from sentence_transformers import SentenceTransformer
+from config import Settings
 
-MODEL_NAME = os.getenv("LLM_MODEL", "gemma2:latest")
-COLLECTION_NAME = os.getenv("QDRANT_COLLECTION", "mevzuat_rag")
-QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
-EMBED_MODEL = os.getenv("EMBED_MODEL", "ytu-ce-cosmos/turkish-e5-large")
+runtime_settings = Settings()
+
+MODEL_NAME = runtime_settings.LLM_MODEL
+COLLECTION_NAME = runtime_settings.QDRANT_COLLECTION
+QDRANT_URL = runtime_settings.QDRANT_URL
+EMBED_MODEL = runtime_settings.EMBED_MODEL
 
 SCORE_THRESHOLD = float(os.getenv("SCORE_THRESHOLD", "0.45"))
 TOP_K = int(os.getenv("TOP_K", "12"))

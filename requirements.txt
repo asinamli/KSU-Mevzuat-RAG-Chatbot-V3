@@ -1,6 +1,7 @@
 ﻿fastapi==0.127.1
 uvicorn[standard]==0.40.0
 pydantic==2.12.3
+pydantic-settings==2.15.0
 qdrant-client==1.16.2
 sentence-transformers==5.1.2
 ollama==0.6.1

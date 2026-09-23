@@ -7,15 +7,18 @@ from typing import Any, Dict, List
 
 from qdrant_client import QdrantClient, models
 from sentence_transformers import SentenceTransformer
+from config import Settings
 
 from chunker import ChunkConfig, chunk_mevzuat
 from file_reader import ReadConfig, read_all_documents
 
 logger = logging.getLogger(__name__)
 
-COLLECTION_NAME = os.getenv("QDRANT_COLLECTION", "mevzuat_rag")
-QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
-EMBED_MODEL = os.getenv("EMBED_MODEL", "ytu-ce-cosmos/turkish-e5-large")
+runtime_settings = Settings()
+
+COLLECTION_NAME = runtime_settings.QDRANT_COLLECTION
+QDRANT_URL = runtime_settings.QDRANT_URL
+EMBED_MODEL = runtime_settings.EMBED_MODEL
 VECTOR_SIZE = int(os.getenv("VECTOR_SIZE", "1024"))
 UUID_NS = uuid.NAMESPACE_URL
 
