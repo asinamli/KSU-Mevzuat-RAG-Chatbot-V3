@@ -1,3 +1,6 @@
+import pytest
+from pydantic import ValidationError
+
 from config import Settings
 
 
@@ -32,3 +35,10 @@ def test_settings_load_environment_overrides(monkeypatch):
     assert settings.QDRANT_URL == "http://localhost:6334"
     assert settings.QDRANT_COLLECTION == "test_collection"
     assert settings.EMBED_MODEL == "test-embedding-model"
+
+
+def test_settings_reject_empty_qdrant_url(monkeypatch):
+    monkeypatch.setenv("QDRANT_URL", "")
+
+    with pytest.raises(ValidationError):
+        Settings()
