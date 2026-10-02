@@ -10,6 +10,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import rag_llm
 from api_schemas import HealthResponse, QuestionRequest, QuestionResponse
+from config import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +34,8 @@ async def lifespan(app: FastAPI):
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     )
     logger.info("API başlatılıyor.")
+    Settings()
+
     try:
         rag_llm.initialize_rag()
         logger.info("RAG sistemi hazır.")

@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 import pytest
 
 import api
-
 
 client = TestClient(api.app)
 
@@ -256,3 +256,11 @@ def test_ask_applies_clarification_to_original_question(monkeypatch):
         "term_scope": "yaz_okulu",
     }
 
+
+def test_startup_rejects_invalid_settings(monkeypatch):
+    monkeypatch.setenv("QDRANT_URL", "")
+    monkeypatch.setattr(api.rag_llm, "initialize_rag", lambda: None)
+
+    with pytest.raises(ValidationError):
+        with TestClient(api.app):
+            pass
