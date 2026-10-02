@@ -36,6 +36,16 @@ def test_health_endpoint():
     assert body["collection"] == api.rag_llm.COLLECTION_NAME
 
 
+def test_health_is_healthy_even_when_rag_is_not_ready(monkeypatch):
+    monkeypatch.setattr(api.rag_llm, "embed_model", None)
+    monkeypatch.setattr(api.rag_llm, "client", None)
+
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "healthy"
+
+
 def test_ask_endpoint_returns_rag_answer(monkeypatch):
     retrieved = [
         {

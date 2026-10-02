@@ -66,10 +66,9 @@ def read_root():
 
 @app.get("/health", response_model=HealthResponse)
 def health_check():
-    rag_ready = rag_llm.embed_model is not None and rag_llm.client is not None
     return HealthResponse(
-        status="healthy" if rag_ready else "degraded",
-        rag_ready=rag_ready,
+        status="healthy",
+        rag_ready=getattr(app.state, "rag_ready", False),
         model=rag_llm.MODEL_NAME,
         collection=rag_llm.COLLECTION_NAME,
     )
