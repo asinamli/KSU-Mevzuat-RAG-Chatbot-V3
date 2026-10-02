@@ -35,9 +35,11 @@ async def lifespan(app: FastAPI):
     )
     logger.info("API başlatılıyor.")
     Settings()
+    app.state.rag_ready = False
 
     try:
         rag_llm.initialize_rag()
+        app.state.rag_ready = True
         logger.info("RAG sistemi hazır.")
     except Exception as e:
         logger.error("Başlangıç hatası: %s", e, exc_info=True)

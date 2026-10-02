@@ -264,3 +264,20 @@ def test_startup_rejects_invalid_settings(monkeypatch):
     with pytest.raises(ValidationError):
         with TestClient(api.app):
             pass
+
+
+def test_startup_marks_rag_not_ready_when_initialization_fails(monkeypatch):
+    def fail_initialize():
+        raise RuntimeError("test initialization failure")
+
+    monkeypatch.setattr(api.rag_llm, "initialize_rag", fail_initialize)
+
+    with TestClient(api.app) as test_client:
+        assert test_client.app.state.rag_ready is False
+
+
+def test_startup_marks_rag_ready_when_initialization_succeeds(monkeypatch):
+    monkeypatch.setattr(api.rag_llm, "initialize_rag", lambda: None)
+
+    with TestClient(api.app) as test_client:
+        assert test_client.app.state.rag_ready is True
