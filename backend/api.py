@@ -9,7 +9,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import rag_llm
-from api_schemas import HealthResponse, QuestionRequest, QuestionResponse
+from api_schemas import HealthResponse, QuestionRequest, QuestionResponse, ReadyResponse
 from config import Settings
 
 logger = logging.getLogger(__name__)
@@ -71,6 +71,19 @@ def health_check():
         rag_ready=getattr(app.state, "rag_ready", False),
         model=rag_llm.MODEL_NAME,
         collection=rag_llm.COLLECTION_NAME,
+    )
+
+
+@app.get("/ready", response_model=ReadyResponse)
+def readiness_check():
+    rag_ready = getattr(app.state, "rag_ready", False)
+
+    if not rag_ready:
+        raise HTTPException(status_code=503, detail="RAG sistemi hazır değil")
+
+    return ReadyResponse(
+        status="ready",
+        rag_ready=True,
     )
 
 

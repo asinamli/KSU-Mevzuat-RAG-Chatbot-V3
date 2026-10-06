@@ -291,3 +291,28 @@ def test_startup_marks_rag_ready_when_initialization_succeeds(monkeypatch):
 
     with TestClient(api.app) as test_client:
         assert test_client.app.state.rag_ready is True
+
+
+def test_ready_returns_503_when_rag_is_not_ready(monkeypatch):
+    def fail_initialize():
+        raise RuntimeError("test initialization failure")
+
+    monkeypatch.setattr(api.rag_llm, "initialize_rag", fail_initialize)
+
+    with TestClient(api.app) as test_client:
+        response = test_client.get("/ready")
+
+    assert response.status_code == 503
+
+
+def test_ready_returns_200_when_rag_is_ready(monkeypatch):
+    monkeypatch.setattr(api.rag_llm, "initialize_rag", lambda: None)
+
+    with TestClient(api.app) as test_client:
+        response = test_client.get("/ready")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "status": "ready",
+        "rag_ready": True,
+    }

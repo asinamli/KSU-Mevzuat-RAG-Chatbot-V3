@@ -30,3 +30,8 @@ class HealthResponse(BaseModel):
     rag_ready: bool
     model: str
     collection: str
+
+
+class ReadyResponse(BaseModel):
+    status: str
+    rag_ready: bool
