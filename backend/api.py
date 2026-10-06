@@ -6,7 +6,8 @@ import uuid
 from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import rag_llm
 from api_schemas import HealthResponse, QuestionRequest, QuestionResponse, ReadyResponse
@@ -48,6 +49,21 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="KSÜ Mevzuat RAG API", version="2.2.0", lifespan=lifespan)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    logger.error(
+        "Beklenmeyen API hatası: %s",
+        exc,
+        exc_info=(type(exc), exc, exc.__traceback__),
+    )
+
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Sistem hatası"},
+    )
+
 
 app.add_middleware(
     CORSMiddleware,

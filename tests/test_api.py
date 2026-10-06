@@ -333,3 +333,26 @@ def test_ready_returns_200_when_rag_is_ready(monkeypatch):
         "status": "ready",
         "rag_ready": True,
     }
+
+
+def test_unhandled_exception_returns_safe_error_contract(monkeypatch):
+    sensitive_detail = r"C:\secret\internal\data.db"
+
+    class FailingSessions(dict):
+        def __contains__(self, key):
+            raise RuntimeError(sensitive_detail)
+
+    monkeypatch.setattr(api, "sessions", FailingSessions())
+
+    test_client = TestClient(
+        api.app,
+        raise_server_exceptions=False,
+    )
+
+    response = test_client.delete("/session/test-session")
+
+    assert response.status_code == 500
+    assert response.json() == {
+        "detail": "Sistem hatası",
+    }
+    assert sensitive_detail not in response.text
