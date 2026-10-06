@@ -374,7 +374,7 @@ def ask_question(req: QuestionRequest):
 
     except Exception as e:
         logger.error("API hatası: %s", e, exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Sistem hatası: {e}")
+        raise HTTPException(status_code=500, detail="Sistem hatası")
 
 
 @app.post("/ask/clarify", response_model=QuestionResponse)

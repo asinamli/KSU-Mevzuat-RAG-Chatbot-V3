@@ -99,6 +99,23 @@ def test_ask_endpoint_returns_rag_answer(monkeypatch):
     assert body["clarification_options"] is None
 
 
+def test_ask_does_not_expose_internal_exception_details(monkeypatch):
+    sensitive_detail = r"C:\secret\internal\data.db"
+
+    def fail_ask(*args, **kwargs):
+        raise RuntimeError(sensitive_detail)
+
+    monkeypatch.setattr(api.rag_llm, "ask", fail_ask)
+
+    response = client.post(
+        "/ask",
+        json={"question": "Test sorusu"},
+    )
+
+    assert response.status_code == 500
+    assert sensitive_detail not in response.json()["detail"]
+
+
 def test_ask_rejects_empty_question():
     response = client.post(
         "/ask",
