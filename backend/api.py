@@ -51,6 +51,17 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="KSÜ Mevzuat RAG API", version="2.2.0", lifespan=lifespan)
 
 
+@app.middleware("http")
+async def request_id_middleware(request: Request, call_next):
+    request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+    request.state.request_id = request_id
+
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+
+    return response
+
+
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     logger.error(

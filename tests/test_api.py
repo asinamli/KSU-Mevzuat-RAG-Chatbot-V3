@@ -356,3 +356,22 @@ def test_unhandled_exception_returns_safe_error_contract(monkeypatch):
         "detail": "Sistem hatası",
     }
     assert sensitive_detail not in response.text
+
+
+def test_response_includes_request_id_header():
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    assert response.headers.get("X-Request-ID")
+
+
+def test_response_preserves_incoming_request_id():
+    request_id = "test-request-id-123"
+
+    response = client.get(
+        "/health",
+        headers={"X-Request-ID": request_id},
+    )
+
+    assert response.status_code == 200
+    assert response.headers["X-Request-ID"] == request_id
