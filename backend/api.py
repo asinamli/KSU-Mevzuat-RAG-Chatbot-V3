@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import logging
 import re
+import time
 import uuid
+
 from contextlib import asynccontextmanager
 from typing import Any, Dict, List, Optional
 
@@ -55,10 +57,51 @@ app = FastAPI(title="KSÜ Mevzuat RAG API", version="2.2.0", lifespan=lifespan)
 async def request_id_middleware(request: Request, call_next):
     request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
     request.state.request_id = request_id
+    started_at = time.perf_counter()
 
-    response = await call_next(request)
+    try:
+        response = await call_next(request)
+    except Exception:
+        duration_ms = (time.perf_counter() - started_at) * 1000
+
+        logger.error(
+            "event=request_failed request_id=%s method=%s path=%s status_code=%s duration_ms=%.2f",
+            request_id,
+            request.method,
+            request.url.path,
+            500,
+            round(duration_ms, 2),
+            extra={
+                "event": "request_failed",
+                "request_id": request_id,
+                "method": request.method,
+                "path": request.url.path,
+                "status_code": 500,
+                "duration_ms": round(duration_ms, 2),
+    },
+)
+        raise
+
+    duration_ms = (time.perf_counter() - started_at) * 1000
+
+    logger.info(
+        "event=request_completed request_id=%s method=%s path=%s status_code=%s duration_ms=%.2f",
+        request_id,
+        request.method,
+        request.url.path,
+        response.status_code,
+        round(duration_ms, 2),
+        extra={
+            "event": "request_completed",
+            "request_id": request_id,
+            "method": request.method,
+            "path": request.url.path,
+            "status_code": response.status_code,
+            "duration_ms": round(duration_ms, 2),
+        },
+    )
+
     response.headers["X-Request-ID"] = request_id
-
     return response
 
 

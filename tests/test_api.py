@@ -1,6 +1,8 @@
+import logging
+
+import pytest
 from fastapi.testclient import TestClient
 from pydantic import ValidationError
-import pytest
 
 import api
 
@@ -375,3 +377,78 @@ def test_response_preserves_incoming_request_id():
 
     assert response.status_code == 200
     assert response.headers["X-Request-ID"] == request_id
+
+
+def test_request_completion_log_includes_request_context(caplog):
+    request_id = "test-request-id-123"
+
+    with caplog.at_level(logging.INFO, logger=api.logger.name):
+        response = client.get(
+            "/health",
+            headers={"X-Request-ID": request_id},
+        )
+
+    assert response.status_code == 200
+
+    record = next(
+        record
+        for record in caplog.records
+        if getattr(record, "event", None) == "request_completed"
+    )
+
+    assert record.request_id == request_id
+    assert record.method == "GET"
+    assert record.path == "/health"
+    assert record.status_code == 200
+    assert isinstance(record.duration_ms, (int, float))
+    assert record.duration_ms >= 0
+
+    message = record.getMessage()
+    assert "event=request_completed" in message
+    assert f"request_id={request_id}" in message
+    assert "method=GET" in message
+    assert "path=/health" in message
+    assert "status_code=200" in message
+
+
+def test_failed_request_log_includes_request_context(monkeypatch, caplog):
+    request_id = "failed-request-id-123"
+
+    class FailingSessions(dict):
+        def __contains__(self, key):
+            raise RuntimeError("test failure")
+
+    monkeypatch.setattr(api, "sessions", FailingSessions())
+
+    test_client = TestClient(
+        api.app,
+        raise_server_exceptions=False,
+    )
+
+    with caplog.at_level(logging.INFO, logger=api.logger.name):
+        response = test_client.delete(
+            "/session/test-session",
+            headers={"X-Request-ID": request_id},
+        )
+
+    assert response.status_code == 500
+
+    record = next(
+        record
+        for record in caplog.records
+        if getattr(record, "event", None) == "request_failed"
+    )
+
+    assert record.request_id == request_id
+    assert record.method == "DELETE"
+    assert record.path == "/session/test-session"
+    assert record.status_code == 500
+    assert isinstance(record.duration_ms, (int, float))
+    assert record.duration_ms >= 0
+
+    message = record.getMessage()
+    assert "event=request_failed" in message
+    assert f"request_id={request_id}" in message
+    assert "method=DELETE" in message
+    assert "path=/session/test-session" in message
+    assert "status_code=500" in message
